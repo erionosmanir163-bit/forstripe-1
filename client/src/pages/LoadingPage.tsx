@@ -1,25 +1,115 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation, useRoute } from "wouter";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useWebSocket } from "@/hooks/use-websocket";
 import { RouteComponentProps } from "wouter";
 
 export default function LoadingPage(_props: RouteComponentProps) {
-  const message = "Procesando su pago...";
+  const [, setLocation] = useLocation();
+  const [, params] = useRoute("/payment/:requestId");
+  const requestId = params?.requestId;
+  
+  const [status, setStatus] = useState("pending");
+  const [message, setMessage] = useState("Procesando su pago...");
+  const [response, setResponse] = useState("");
+  
   const contactInfo = {
     phone: "600 360 0077",
     hours: "Lun - Vie: 9:00 a 19:00"
   };
-
+  
+  // Connect to WebSocket
+  const { status: wsStatus, lastMessage } = useWebSocket({
+    url: `/ws?type=user&requestId=${requestId}`,
+    onMessage: (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'request_status' || data.type === 'request_update') {
+          const request = data.request;
+          
+          setStatus(request.status);
+          
+          // Set message based on status
+          if (request.status === 'processing') {
+            setMessage("Su solicitud está siendo procesada...");
+          } else if (request.status === 'completed') {
+            setMessage("¡Su pago ha sido aprobado!");
+          } else if (request.status === 'rejected') {
+            setMessage("Su pago ha sido rechazado");
+          }
+          
+          // Set response if provided
+          if (request.response) {
+            setResponse(request.response);
+          }
+        }
+      } catch (err) {
+        console.error('Error parsing WebSocket message:', err);
+      }
+    }
+  });
+  
+  // Redirect if no requestId
+  useEffect(() => {
+    if (!requestId) {
+      setLocation("/");
+    }
+  }, [requestId, setLocation]);
+  
+  // Get color for status
+  const getStatusColor = () => {
+    switch (status) {
+      case 'pending': return "text-primary";
+      case 'processing': return "text-blue-600";
+      case 'completed': return "text-green-600";
+      case 'rejected': return "text-red-600";
+      default: return "text-primary";
+    }
+  };
+  
+  // Handle button click
+  const handleButtonClick = () => {
+    setLocation("/");
+  };
+  
   return (
     <div className="flex justify-center items-center min-h-screen p-4 bg-white flex-col">
       <Card className="max-w-[500px] w-full shadow-lg rounded-lg overflow-hidden mb-8">
         <div className="p-8 flex flex-col items-center">
-          <div className="mb-8">
-            <LoadingSpinner size="large" />
-          </div>
-          <h2 className="text-primary text-xl font-medium text-center">
+          {status === 'pending' || status === 'processing' ? (
+            <div className="mb-8">
+              <LoadingSpinner size="large" />
+            </div>
+          ) : status === 'completed' ? (
+            <div className="mb-8 text-green-500 text-6xl">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+              </svg>
+            </div>
+          ) : (
+            <div className="mb-8 text-red-500 text-6xl">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </div>
+          )}
+          
+          <h2 className={`${getStatusColor()} text-xl font-medium text-center mb-4`}>
             {message}
           </h2>
+          
+          {response && (
+            <p className="text-gray-700 text-center mb-6">{response}</p>
+          )}
+          
+          {(status === 'completed' || status === 'rejected') && (
+            <Button onClick={handleButtonClick} className="w-full">
+              Volver al inicio
+            </Button>
+          )}
         </div>
       </Card>
       
