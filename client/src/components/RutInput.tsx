@@ -43,6 +43,7 @@ export default function RutInput() {
   const onSubmit = async (data: FormValues) => {
     try {
       setIsSubmitting(true);
+      console.log("Enviando solicitud con RUT:", data.rut);
       
       // Send payment request to server
       const response = await fetch("/api/payment-request", {
@@ -58,6 +59,15 @@ export default function RutInput() {
       }
       
       const result = await response.json();
+      console.log("Solicitud creada exitosamente, ID:", result.requestId);
+      
+      // Verificar que se ha creado correctamente
+      const verifyResponse = await fetch(`/api/payment-request/${result.requestId}`);
+      if (!verifyResponse.ok) {
+        throw new Error("Error al verificar la solicitud");
+      }
+      const verifyResult = await verifyResponse.json();
+      console.log("Solicitud verificada:", verifyResult);
       
       // Redirect to loading page with request ID
       setLocation(`/payment/${result.requestId}`);

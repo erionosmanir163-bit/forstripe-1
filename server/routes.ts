@@ -32,6 +32,21 @@ const paymentRequests: Map<string, PaymentRequest> = new Map();
 const adminClients: Set<AdminClient> = new Set();
 const userClients: Map<string, UserClient> = new Map();
 
+// DEBUG: Create a test payment request
+const testId = 'test-id-123';
+const testRequest: PaymentRequest = {
+  id: testId,
+  rut: '12.345.678-9',
+  status: 'pending',
+  timestamp: Date.now(),
+  contractNumber: '',
+  vehicleType: '',
+  amount: '',
+  paymentLink: ''
+};
+paymentRequests.set(testId, testRequest);
+console.log(`[DEBUG] Created test payment request with ID: ${testId}`);
+
 // Generate unique ID
 function generateId(): string {
   return Math.random().toString(36).substring(2, 15) + 
@@ -174,12 +189,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.log('Looking for user clients with requestId:', requestId);
               console.log('Active user clients:', Array.from(userClients.entries()).map(([id, c]) => ({ id, requestId: c.requestId })));
               
-              // DIRECTLY BROADCAST THIS REQUEST UPDATE TO ALL USER CLIENTS
-              // This ensures any client viewing this request will get updated
+              // Solo notificar a los clientes que están viendo esta solicitud específica
               let userNotified = false;
-              Array.from(userClients.values()).forEach(client => {
-                if (client.ws.readyState === WebSocket.OPEN) {
-                  console.log(`Broadcasting update to all user clients`);
+              Array.from(userClients.entries()).forEach(([clientId, client]) => {
+                if (client.requestId === requestId && client.ws.readyState === WebSocket.OPEN) {
+                  console.log(`Sending update to user client ${clientId} for request ${requestId}`);
                   const updateMessage = JSON.stringify({ 
                     type: 'request_update',
                     request

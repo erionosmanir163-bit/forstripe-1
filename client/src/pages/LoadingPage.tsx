@@ -28,12 +28,15 @@ export default function LoadingPage(_props: RouteComponentProps) {
   const { status: wsStatus, lastMessage, sendJsonMessage } = useWebSocket({
     url: `/ws?type=user&requestId=${requestId}`,
     onOpen: () => {
-      console.log('WebSocket connection opened, sending request registration');
+      console.log('WebSocket connection opened, sending request registration for request ID:', requestId);
       // Send a message to register this client with the specific requestId
-      sendJsonMessage({
-        type: 'register_request',
-        requestId
-      });
+      setTimeout(() => {
+        sendJsonMessage({
+          type: 'register_request',
+          requestId
+        });
+        console.log('Registration message sent for request ID:', requestId);
+      }, 500); // Pequeño retraso para asegurar que la conexión está completamente establecida
     },
     onMessage: (event) => {
       try {
