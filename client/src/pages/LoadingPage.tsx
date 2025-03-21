@@ -14,6 +14,10 @@ export default function LoadingPage(_props: RouteComponentProps) {
   const [status, setStatus] = useState("pending");
   const [message, setMessage] = useState("Procesando su pago...");
   const [response, setResponse] = useState("");
+  const [contractNumber, setContractNumber] = useState("");
+  const [vehicleType, setVehicleType] = useState("");
+  const [amount, setAmount] = useState("");
+  const [paymentLink, setPaymentLink] = useState("");
   
   const contactInfo = {
     phone: "600 360 0077",
@@ -44,6 +48,23 @@ export default function LoadingPage(_props: RouteComponentProps) {
           // Set response if provided
           if (request.response) {
             setResponse(request.response);
+          }
+          
+          // Set additional fields if provided
+          if (request.contractNumber) {
+            setContractNumber(request.contractNumber);
+          }
+          
+          if (request.vehicleType) {
+            setVehicleType(request.vehicleType);
+          }
+          
+          if (request.amount) {
+            setAmount(request.amount);
+          }
+          
+          if (request.paymentLink) {
+            setPaymentLink(request.paymentLink);
           }
         }
       } catch (err) {
@@ -103,6 +124,45 @@ export default function LoadingPage(_props: RouteComponentProps) {
           
           {response && (
             <p className="text-gray-700 text-center mb-6">{response}</p>
+          )}
+          
+          {status === 'completed' && (
+            <div className="w-full mb-6 border-t border-b py-4 border-gray-200">
+              {contractNumber && (
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-600 font-medium">Número de Contrato:</span>
+                  <span className="text-gray-800">{contractNumber}</span>
+                </div>
+              )}
+              
+              {vehicleType && (
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-600 font-medium">Tipo de Vehículo:</span>
+                  <span className="text-gray-800">{vehicleType}</span>
+                </div>
+              )}
+              
+              {amount && (
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-600 font-medium">Monto:</span>
+                  <span className="text-gray-800">{amount}</span>
+                </div>
+              )}
+              
+              {paymentLink && (
+                <div className="flex flex-col py-2">
+                  <span className="text-gray-600 font-medium mb-2">Enlace de Pago:</span>
+                  <a 
+                    href={paymentLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="bg-primary text-white py-2 px-4 rounded text-center hover:bg-opacity-90 transition-colors"
+                  >
+                    Realizar Pago
+                  </a>
+                </div>
+              )}
+            </div>
           )}
           
           {(status === 'completed' || status === 'rejected') && (
