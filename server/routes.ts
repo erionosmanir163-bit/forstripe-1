@@ -101,6 +101,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     return res.json(request);
   });
+  
+  // API to get all payment requests (para el panel de admin)
+  app.get("/api/payment-requests", (_req: Request, res: Response) => {
+    const requests = Array.from(paymentRequests.values());
+    console.log('Solicitudes enviadas a través de API:', requests.map(r => `${r.id} (${r.status})`));
+    return res.json(requests);
+  });
 
   // Create HTTP server
   const httpServer = createServer(app);

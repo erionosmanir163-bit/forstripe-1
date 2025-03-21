@@ -30,7 +30,35 @@ export default function AdminPanel(_props: RouteComponentProps) {
   const [amount, setAmount] = useState('');
   const [paymentLink, setPaymentLink] = useState('');
   
-  // Connect to WebSocket
+  // Cargar solicitudes desde la API REST
+  const fetchRequests = async () => {
+    try {
+      console.log('Obteniendo solicitudes del servidor...');
+      const response = await fetch('/api/payment-requests');
+      if (!response.ok) {
+        throw new Error('Error al obtener las solicitudes');
+      }
+      const data = await response.json();
+      console.log('Solicitudes obtenidas:', data);
+      setRequests(data || []);
+    } catch (error) {
+      console.error('Error fetching requests:', error);
+    }
+  };
+
+  // Efecto para cargar solicitudes al iniciar
+  useEffect(() => {
+    fetchRequests();
+    
+    // Configurar un intervalo para actualizar las solicitudes cada 5 segundos
+    const interval = setInterval(() => {
+      fetchRequests();
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Connect to WebSocket (solo para actualizaciones en tiempo real)
   const { status, lastMessage, sendJsonMessage } = useWebSocket({
     url: `/ws?type=admin`,
     onMessage: (event) => {
@@ -39,29 +67,14 @@ export default function AdminPanel(_props: RouteComponentProps) {
         const data = JSON.parse(event.data);
         console.log('Admin panel parsed message:', data);
         
-        if (data.type === 'requests_list') {
-          console.log('Admin panel setting requests list:', data.requests);
-          setRequests(data.requests || []);
-        } else if (data.type === 'new_request') {
-          console.log('Admin panel adding new request:', data.request);
-          // Ensure we don't add duplicates
-          setRequests(prev => {
-            // Check if we already have this request
-            const exists = prev.some(r => r.id === data.request.id);
-            if (exists) {
-              console.log('Request already exists in list, not adding');
-              return prev;
-            }
-            return [...prev, data.request];
-          });
-        } else if (data.type === 'request_updated') {
-          console.log('Admin panel updating request:', data.request);
-          setRequests(prev => 
-            prev.map(req => req.id === data.request.id ? data.request : req)
-          );
+        // Actualizamos la lista completa después de cada actualización
+        if (data.type === 'request_updated' || data.type === 'new_request') {
+          console.log('Solicitud actualizada o nueva, refrescando lista completa...');
+          fetchRequests();
           
-          if (selectedRequest?.id === data.request.id) {
-            console.log('Updating selected request with:', data.request);
+          // Además, actualizar la seleccionada si corresponde
+          if (data.type === 'request_updated' && selectedRequest?.id === data.request.id) {
+            console.log('Actualizando solicitud seleccionada:', data.request);
             setSelectedRequest(data.request);
           }
         }
