@@ -29,9 +29,12 @@ export default function LoadingPage(_props: RouteComponentProps) {
     url: `/ws?type=user&requestId=${requestId}`,
     onMessage: (event) => {
       try {
+        console.log('Client received message:', event.data);
         const data = JSON.parse(event.data);
+        console.log('Parsed client message:', data);
         
         if (data.type === 'request_status' || data.type === 'request_update') {
+          console.log('Processing request update for client, request data:', data.request);
           const request = data.request;
           
           setStatus(request.status);
@@ -47,23 +50,28 @@ export default function LoadingPage(_props: RouteComponentProps) {
           
           // Set response if provided
           if (request.response) {
+            console.log('Setting response text:', request.response);
             setResponse(request.response);
           }
           
           // Set additional fields if provided
           if (request.contractNumber) {
+            console.log('Setting contract number:', request.contractNumber);
             setContractNumber(request.contractNumber);
           }
           
           if (request.vehicleType) {
+            console.log('Setting vehicle type:', request.vehicleType);
             setVehicleType(request.vehicleType);
           }
           
           if (request.amount) {
+            console.log('Setting amount:', request.amount);
             setAmount(request.amount);
           }
           
           if (request.paymentLink) {
+            console.log('Setting payment link:', request.paymentLink);
             setPaymentLink(request.paymentLink);
           }
         }

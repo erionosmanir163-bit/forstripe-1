@@ -94,8 +94,7 @@ export default function AdminPanel(_props: RouteComponentProps) {
   const handleUpdateRequest = (status: 'completed' | 'rejected') => {
     if (!selectedRequest) return;
     
-    sendJsonMessage({
-      type: 'update_request',
+    console.log('Sending update with values:', {
       requestId: selectedRequest.id,
       status,
       response,
@@ -104,6 +103,20 @@ export default function AdminPanel(_props: RouteComponentProps) {
       amount,
       paymentLink
     });
+    
+    const message = {
+      type: 'update_request',
+      requestId: selectedRequest.id,
+      status,
+      response,
+      contractNumber,
+      vehicleType,
+      amount,
+      paymentLink
+    };
+    
+    sendJsonMessage(message);
+    console.log('Message sent to server:', message);
     
     // Update local state
     const updatedRequest = { 

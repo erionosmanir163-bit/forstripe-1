@@ -122,10 +122,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const data = JSON.parse(message.toString());
           
           if (data.type === 'update_request') {
+            console.log('Admin update request received:', data);
             const { requestId, status, response, contractNumber, vehicleType, amount, paymentLink } = data;
             const request = paymentRequests.get(requestId);
             
             if (request) {
+              console.log('Updating request with ID:', requestId);
+              console.log('Original request:', request);
+              
               request.status = status;
               if (response) request.response = response;
               
@@ -134,6 +138,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               if (vehicleType) request.vehicleType = vehicleType;
               if (amount) request.amount = amount;
               if (paymentLink) request.paymentLink = paymentLink;
+              
+              console.log('Updated request:', request);
               
               // Find user client with this requestId and notify them
               Array.from(userClients.entries()).forEach(([clientId, client]) => {

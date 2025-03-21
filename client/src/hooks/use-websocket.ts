@@ -110,7 +110,12 @@ export function useWebSocket({
   
   // Send JSON message to WebSocket
   const sendJsonMessage = useCallback((data: any) => {
-    return sendMessage(JSON.stringify(data));
+    console.log('Attempting to send JSON message:', data);
+    const jsonString = JSON.stringify(data);
+    console.log('Stringified message:', jsonString);
+    const result = sendMessage(jsonString);
+    console.log('Message sent result:', result);
+    return result;
   }, [sendMessage]);
   
   // Connect on mount and disconnect on unmount
