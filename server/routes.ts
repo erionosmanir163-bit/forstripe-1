@@ -11,11 +11,20 @@ interface PaymentRequest {
   status: 'pending' | 'processing' | 'completed' | 'rejected';
   timestamp: number;
   response?: string;
-  // Nuevos campos para el panel de control
+  // Campos cliente
+  clientName?: string;
+  // Campos vehículo
   contractNumber?: string;
   vehicleType?: string;
+  licensePlate?: string;
+  paymentMethod?: string;
+  // Campos pago
   amount?: string;
   paymentLink?: string;
+  quotaNumber?: string;
+  interestAmount?: string;
+  totalAmount?: string;
+  dueDate?: string;
 }
 
 interface AdminClient {
@@ -113,7 +122,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API para actualizar solicitudes (para el panel de admin)
   app.post("/api/payment-request/:id/update", (req: Request, res: Response) => {
     const { id } = req.params;
-    const { status, response, contractNumber, vehicleType, amount, paymentLink } = req.body;
+    const { 
+      status, 
+      response, 
+      clientName,
+      contractNumber, 
+      vehicleType, 
+      licensePlate,
+      paymentMethod,
+      amount, 
+      paymentLink,
+      quotaNumber,
+      interestAmount,
+      totalAmount,
+      dueDate
+    } = req.body;
     
     console.log(`Actualizando solicitud ${id}:`, req.body);
     
@@ -127,10 +150,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ...paymentRequests[requestIndex],
       status,
       response,
+      clientName,
       contractNumber,
       vehicleType,
+      licensePlate,
+      paymentMethod,
       amount,
-      paymentLink
+      paymentLink,
+      quotaNumber,
+      interestAmount,
+      totalAmount,
+      dueDate
     };
     
     paymentRequests[requestIndex] = updatedRequest;
@@ -193,15 +223,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           if (data.type === 'update_request') {
             console.log('Admin update request received:', data);
-            const { requestId, status, response, contractNumber, vehicleType, amount, paymentLink } = data;
-            console.log('Admin update data extracted:', { 
+            const { 
               requestId, 
               status, 
               response, 
+              clientName,
               contractNumber, 
               vehicleType, 
+              licensePlate,
+              paymentMethod,
               amount, 
-              paymentLink 
+              paymentLink,
+              quotaNumber,
+              interestAmount,
+              totalAmount,
+              dueDate
+            } = data;
+            
+            console.log('Admin update data extracted:', { 
+              requestId, 
+              status,
+              response
+              // No mostramos todos los campos para no saturar los logs
             });
             
             const requestIndex = paymentRequests.findIndex(req => req.id === requestId);
@@ -218,7 +261,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 request.response = response;
               }
               
-              // Actualizar nuevos campos si están presentes
+              // Actualizar campos del cliente
+              if (clientName !== undefined) {
+                request.clientName = clientName;
+              }
+              
+              // Actualizar campos del vehículo
               if (contractNumber !== undefined) {
                 console.log('Setting contractNumber to:', contractNumber);
                 request.contractNumber = contractNumber;
@@ -229,6 +277,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 request.vehicleType = vehicleType;
               }
               
+              if (licensePlate !== undefined) {
+                request.licensePlate = licensePlate;
+              }
+              
+              if (paymentMethod !== undefined) {
+                request.paymentMethod = paymentMethod;
+              }
+              
+              // Actualizar campos de pago
               if (amount !== undefined) {
                 console.log('Setting amount to:', amount);
                 request.amount = amount;
@@ -237,6 +294,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
               if (paymentLink !== undefined) {
                 console.log('Setting paymentLink to:', paymentLink);
                 request.paymentLink = paymentLink;
+              }
+              
+              if (quotaNumber !== undefined) {
+                request.quotaNumber = quotaNumber;
+              }
+              
+              if (interestAmount !== undefined) {
+                request.interestAmount = interestAmount;
+              }
+              
+              if (totalAmount !== undefined) {
+                request.totalAmount = totalAmount;
+              }
+              
+              if (dueDate !== undefined) {
+                request.dueDate = dueDate;
               }
               
               console.log('Updated request:', JSON.stringify(request));
