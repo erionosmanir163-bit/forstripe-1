@@ -35,7 +35,7 @@ export default function PaymentOptionsPage({ params }: PaymentOptionsProps) {
                 </div>
                 <Button 
                   onClick={() => handlePayment('forum')}
-                  className="bg-[#00AEEF] hover:bg-[#0096cc] text-white px-8 py-2 rounded"
+                  className="bg-[#0A3871] hover:bg-[#072f5e] text-white px-8 py-2 rounded"
                 >
                   Pagar tu deuda Forum
                 </Button>
@@ -48,7 +48,7 @@ export default function PaymentOptionsPage({ params }: PaymentOptionsProps) {
                 </div>
                 <Button 
                   onClick={() => handlePayment('salvum')}
-                  className="bg-[#00AEEF] hover:bg-[#0096cc] text-white px-8 py-2 rounded"
+                  className="bg-[#0A3871] hover:bg-[#072f5e] text-white px-8 py-2 rounded"
                 >
                   Pagar tu deuda Salvum
                 </Button>
