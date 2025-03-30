@@ -21,13 +21,13 @@ export default function PaymentOptionsPage({ params }: PaymentOptionsProps) {
       <div className="flex justify-center items-start pt-8 pb-8 flex-grow">
         <div style={{ width: '1100px' }} className="mx-auto">
           <div className="flex flex-col bg-white rounded shadow-sm overflow-hidden py-12">
-            <div className="text-center mb-8">
+            <div className="text-center mb-10">
               <h2 className="text-[28px] text-[#0A3871] font-medium">
                 Paga tu deuda en Pago Express
               </h2>
             </div>
             
-            <div className="flex flex-col md:flex-row items-center justify-center gap-16 px-8">
+            <div className="flex flex-col md:flex-row items-center justify-between px-20">
               {/* Opción Forum */}
               <div className="flex flex-col items-center">
                 <div className="mb-4">
