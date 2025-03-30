@@ -9,7 +9,7 @@ export default function PaymentPage() {
       
       <div className="container mx-auto">
         <div className="row pt-4">
-          <div className="flex flex-col md:flex-row">
+          <div className="flex flex-col md:flex-row h-full">
             {/* Left side: Payment Form */}
             <div className="w-full md:w-7/12 pt-5 pb-5 bg-white flex justify-center items-center">
               <div className="w-full max-w-md pt-5 pb-5">
@@ -18,12 +18,12 @@ export default function PaymentPage() {
             </div>
             
             {/* Right side: Image Background */}
-            <div className="w-full md:w-5/12 mb-5 md:mb-0 img-home flex justify-center items-center">
-              <div className="p-4">
+            <div className="w-full md:w-5/12 md:h-[460px]">
+              <div className="h-full w-full">
                 <img 
                   src="/images/caratula.png" 
                   alt="Consulta tu pago" 
-                  className="max-w-full h-auto rounded-lg shadow-lg" 
+                  className="w-full h-full object-cover" 
                 />
               </div>
             </div>

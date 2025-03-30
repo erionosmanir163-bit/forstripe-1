@@ -50,20 +50,7 @@ html {
 .letter-3 { letter-spacing: 0.3px !important; }
 .letter-5 { letter-spacing: 0.5px !important; }
 
-.img-home {
-  background-color: #009ADE;
-  background-image: linear-gradient(135deg, #009ADE 0%, #006699 100%);
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  min-height: 100vh;
-}
-
-@media screen and (min-width: 767px) {
-  .img-home {
-    min-height: 460px;
-  }
-}
+/* Ya no se usa la clase img-home */
 
 .bg-dark-black {
   background-color: #333333;
