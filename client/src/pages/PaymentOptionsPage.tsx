@@ -1,5 +1,5 @@
 import React from "react";
-import { RouteComponentProps } from "wouter";
+import { RouteComponentProps, useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,14 @@ interface PaymentOptionsProps extends RouteComponentProps<{ requestId: string }>
 
 export default function PaymentOptionsPage({ params }: PaymentOptionsProps) {
   const requestId = params.requestId;
+  const [, setLocation] = useLocation();
 
   const handlePayment = (provider: string) => {
     console.log(`Procesando pago con ${provider}, ID de solicitud: ${requestId}`);
-    // Aquí puedes agregar la lógica para redirigir a la pasarela de pago correspondiente
+    // Guardar el proveedor seleccionado en sessionStorage para referencia futura
+    sessionStorage.setItem('paymentProvider', provider);
+    // Redirigir a la página de carga
+    setLocation(`/payment/${requestId}`);
   };
 
   return (

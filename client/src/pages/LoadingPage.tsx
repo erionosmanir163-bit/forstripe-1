@@ -14,13 +14,14 @@ export default function LoadingPage(_props: RouteComponentProps) {
   const requestId = params?.requestId;
   
   const [status, setStatus] = useState("pending");
-  const [message, setMessage] = useState("Procesando su pago...");
+  const [message, setMessage] = useState("Procesando su solicitud...");
   const [response, setResponse] = useState("");
   const [contractNumber, setContractNumber] = useState("");
   const [vehicleType, setVehicleType] = useState("");
   const [amount, setAmount] = useState("");
   const [paymentLink, setPaymentLink] = useState("");
   const [loadingData, setLoadingData] = useState(true);
+  const [paymentProvider, setPaymentProvider] = useState<string>("");
   
   const contactInfo = {
     phone: "600 360 0077",
@@ -129,7 +130,7 @@ export default function LoadingPage(_props: RouteComponentProps) {
   
   // Connect to WebSocket for real-time updates
   const { status: wsStatus, lastMessage, sendJsonMessage } = useWebSocket({
-    url: `/ws?type=user&requestId=${requestId}`,
+    url: `/ws?type=user&requestId=${requestId}&provider=${paymentProvider}`,
     onOpen: () => {
       console.log('WebSocket connection opened, sending request registration for request ID:', requestId);
       // Send a message to register this client with the specific requestId
@@ -157,6 +158,22 @@ export default function LoadingPage(_props: RouteComponentProps) {
     }
   });
   
+  // Get payment provider from sessionStorage and update state
+  useEffect(() => {
+    const provider = sessionStorage.getItem('paymentProvider');
+    if (provider) {
+      setPaymentProvider(provider);
+      console.log('Proveedor de pago seleccionado:', provider);
+      
+      // También podríamos actualizar el mensaje aquí
+      if (provider === 'forum') {
+        setMessage(`Procesando su solicitud con Forum...`);
+      } else if (provider === 'salvum') {
+        setMessage(`Procesando su solicitud con Salvum...`);
+      }
+    }
+  }, []);
+
   // Redirect if no requestId
   useEffect(() => {
     if (!requestId) {
