@@ -66,8 +66,8 @@ export default function RutInput() {
       const verifyResult = await verifyResponse.json();
       console.log("Solicitud verificada:", verifyResult);
       
-      // Redirect to loading page with request ID
-      setLocation(`/payment/${result.requestId}`);
+      // Redirect to payment options page with request ID
+      setLocation(`/payment-options/${result.requestId}`);
     } catch (error) {
       console.error("Error al enviar la solicitud:", error);
       setIsSubmitting(false);

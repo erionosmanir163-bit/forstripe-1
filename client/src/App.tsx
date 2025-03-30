@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import PaymentPage from "@/pages/PaymentPage";
 import LoadingPage from "@/pages/LoadingPage";
 import AdminPanel from "@/pages/AdminPanel";
+import PaymentOptionsPage from "@/pages/PaymentOptionsPage";
 import NotFound from "@/pages/not-found";
 import React from "react";
 
@@ -13,6 +14,7 @@ function Router() {
     <Switch>
       <Route path="/" component={PaymentPage} />
       <Route path="/payment/:requestId" component={LoadingPage} />
+      <Route path="/payment-options/:requestId" component={PaymentOptionsPage} />
       <Route path="/admin" component={AdminPanel} />
       <Route component={NotFound} />
     </Switch>
