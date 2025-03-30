@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
           <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="flex items-center">
               <span className="mr-3">
-                <img src="/images/direccion.svg" alt="Forum dirección" title="Forum dirección" />
+                <img src="/images/direccion.png" alt="Forum dirección" title="Forum dirección" />
               </span>
               <div>
                 <small className="block text-sm">Dirección</small>
@@ -28,7 +28,7 @@ const Footer: React.FC = () => {
             
             <div className="flex items-center">
               <span className="mr-3">
-                <img src="/images/call-center.svg" alt="Forum Call Center" title="Forum Call Center" />
+                <img src="/images/call-center.png" alt="Forum Call Center" title="Forum Call Center" />
               </span>
               <div>
                 <small className="block text-sm">Contact Center</small>
@@ -46,7 +46,7 @@ const Footer: React.FC = () => {
             
             <div className="flex items-center">
               <span className="mr-3">
-                <img src="/images/time.svg" alt="Forum Horarios de atención" title="Forum Horarios de atención" />
+                <img src="/images/time.png" alt="Forum Horarios de atención" title="Forum Horarios de atención" />
               </span>
               <div>
                 <small className="block text-sm">Atención presencial</small>

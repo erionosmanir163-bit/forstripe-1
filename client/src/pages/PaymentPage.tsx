@@ -18,8 +18,14 @@ export default function PaymentPage() {
             </div>
             
             {/* Right side: Image Background */}
-            <div className="w-full md:w-5/12 mb-5 md:mb-0 img-home">
-              {/* This div uses the background image from CSS */}
+            <div className="w-full md:w-5/12 mb-5 md:mb-0 img-home flex justify-center items-center">
+              <div className="p-4">
+                <img 
+                  src="/images/caratula.png" 
+                  alt="Consulta tu pago" 
+                  className="max-w-full h-auto rounded-lg shadow-lg" 
+                />
+              </div>
             </div>
           </div>
         </div>

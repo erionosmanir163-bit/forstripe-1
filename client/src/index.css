@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css?family=Montserrat:300,400|Roboto&display=swap');
+
 :root {
   --blue: #009ADE;
   --indigo: #6610f2;
@@ -25,8 +27,6 @@
   --light: #F1F1F1;
   --dark: #555555;
 }
-
-@import url('https://fonts.googleapis.com/css?family=Montserrat:300,400|Roboto&display=swap');
 
 body {
   font-family: Roboto, sans-serif;
