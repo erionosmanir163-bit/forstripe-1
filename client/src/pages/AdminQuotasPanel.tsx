@@ -378,124 +378,46 @@ export default function AdminQuotasPanel(_props: RouteComponentProps) {
                           <div className="divide-y">
                             {quotas.map((quota, index) => (
                               <div key={index} className="p-4">
+                                <div className="grid grid-cols-2 gap-4 mb-3">
+                                  <div>
+                                    <p className="text-xs text-gray-500">Nº Contrato</p>
+                                    <p className="font-medium">{quota.contractNumber}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500">Patente</p>
+                                    <p className="font-medium">{quota.licensePlate}</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="mb-3">
+                                  <p className="text-xs text-gray-500">Vehículo</p>
+                                  <p className="font-medium">{quota.vehicleType}</p>
+                                </div>
+                                
                                 <div className="grid grid-cols-4 gap-4 mb-3">
                                   <div>
-                                    <label className="block text-xs text-gray-500 mb-1">
-                                      Nº Contrato
-                                    </label>
-                                    <Input 
-                                      value={quota.contractNumber}
-                                      onChange={(e) => {
-                                        const newQuotas = [...quotas];
-                                        newQuotas[index].contractNumber = e.target.value;
-                                        setQuotas(newQuotas);
-                                      }}
-                                      className="w-full"
-                                    />
+                                    <p className="text-xs text-gray-500">Nº Cuota</p>
+                                    <p className="font-medium">{quota.quotaNumber}</p>
                                   </div>
                                   <div>
-                                    <label className="block text-xs text-gray-500 mb-1">
-                                      Patente
-                                    </label>
-                                    <Input 
-                                      value={quota.licensePlate}
-                                      onChange={(e) => {
-                                        const newQuotas = [...quotas];
-                                        newQuotas[index].licensePlate = e.target.value;
-                                        setQuotas(newQuotas);
-                                      }}
-                                      className="w-full"
-                                    />
+                                    <p className="text-xs text-gray-500">Monto Cuota</p>
+                                    <p className="font-medium">{quota.quotaAmount}</p>
                                   </div>
-                                  <div className="col-span-2">
-                                    <label className="block text-xs text-gray-500 mb-1">
-                                      Vehículo
-                                    </label>
-                                    <Input 
-                                      value={quota.vehicleType}
-                                      onChange={(e) => {
-                                        const newQuotas = [...quotas];
-                                        newQuotas[index].vehicleType = e.target.value;
-                                        setQuotas(newQuotas);
-                                      }}
-                                      className="w-full"
-                                    />
+                                  <div>
+                                    <p className="text-xs text-gray-500">Interés Mora</p>
+                                    <p className="font-medium">{quota.interestAmount}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500">Total</p>
+                                    <p className="font-medium text-primary">{quota.totalAmount}</p>
                                   </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-4 gap-4">
-                                  <div>
-                                    <label className="block text-xs text-gray-500 mb-1">
-                                      Nº Cuota
-                                    </label>
-                                    <Input 
-                                      value={quota.quotaNumber}
-                                      onChange={(e) => {
-                                        const newQuotas = [...quotas];
-                                        newQuotas[index].quotaNumber = e.target.value;
-                                        setQuotas(newQuotas);
-                                      }}
-                                      className="w-full"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs text-gray-500 mb-1">
-                                      Monto Cuota
-                                    </label>
-                                    <Input 
-                                      value={quota.quotaAmount}
-                                      onChange={(e) => {
-                                        const newQuotas = [...quotas];
-                                        newQuotas[index].quotaAmount = e.target.value;
-                                        setQuotas(newQuotas);
-                                      }}
-                                      className="w-full"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs text-gray-500 mb-1">
-                                      Interés Mora
-                                    </label>
-                                    <Input 
-                                      value={quota.interestAmount}
-                                      onChange={(e) => {
-                                        const newQuotas = [...quotas];
-                                        newQuotas[index].interestAmount = e.target.value;
-                                        setQuotas(newQuotas);
-                                      }}
-                                      className="w-full"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs text-gray-500 mb-1">
-                                      Total
-                                    </label>
-                                    <Input 
-                                      value={quota.totalAmount}
-                                      onChange={(e) => {
-                                        const newQuotas = [...quotas];
-                                        newQuotas[index].totalAmount = e.target.value;
-                                        setQuotas(newQuotas);
-                                      }}
-                                      className="w-full"
-                                    />
-                                  </div>
-                                </div>
-                                
-                                <div className="mt-2">
-                                  <label className="block text-xs text-gray-500 mb-1">
-                                    Días hasta vencimiento
-                                  </label>
-                                  <Input 
-                                    type="number"
-                                    value={quota.daysUntilDue}
-                                    onChange={(e) => {
-                                      const newQuotas = [...quotas];
-                                      newQuotas[index].daysUntilDue = parseInt(e.target.value);
-                                      setQuotas(newQuotas);
-                                    }}
-                                    className="w-32"
-                                  />
+                                <div>
+                                  <p className="text-xs text-gray-500">Vencimiento</p>
+                                  <Badge variant={quota.daysUntilDue <= 0 ? 'destructive' : 'outline'}>
+                                    {quota.daysUntilDue <= 0 ? 'Vencida' : `${quota.daysUntilDue} días`}
+                                  </Badge>
                                 </div>
                                 
                                 {index < quotas.length - 1 && (
