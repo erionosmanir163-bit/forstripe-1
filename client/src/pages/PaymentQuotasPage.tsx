@@ -117,39 +117,39 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-5xl mx-auto pt-4 px-4">
         {/* Header con nombre y RUT */}
-        <div className="flex items-center mb-8">
+        <div className="flex items-center mb-6">
           <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <img src="/attached_assets/user.png" alt="Usuario" className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-primary font-medium">{clientName}</p>
+            <p className="text-[#009ADE] font-medium">{clientName}</p>
             <p className="text-gray-600 text-sm">{clientRut}</p>
           </div>
         </div>
         
         {/* Progress steps */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex items-center justify-between relative">
             <div className="absolute left-0 right-0 h-1 bg-gray-300 top-1/2 transform -translate-y-1/2 z-0"></div>
             <div className="flex flex-col items-center relative z-10">
-              <div className={`w-6 h-6 rounded-full ${currentStep >= 1 ? 'bg-primary' : 'bg-gray-400'} flex items-center justify-center text-white text-sm mb-1`}>
-                {currentStep > 1 ? '✓' : '1'}
+              <div className="w-6 h-6 rounded-full bg-[#009ADE] flex items-center justify-center text-white text-sm mb-1">
+                ⚫
               </div>
               <div className="text-center text-xs text-gray-600 w-24">
                 Cuotas a pagar
               </div>
             </div>
             <div className="flex flex-col items-center relative z-10">
-              <div className={`w-6 h-6 rounded-full ${currentStep >= 2 ? 'bg-primary' : 'bg-gray-400'} flex items-center justify-center text-white text-sm mb-1`}>
-                {currentStep > 2 ? '✓' : '2'}
+              <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-sm mb-1">
+                ⚫
               </div>
               <div className="text-center text-xs text-gray-600 w-24">
                 Método de pago
               </div>
             </div>
             <div className="flex flex-col items-center relative z-10">
-              <div className={`w-6 h-6 rounded-full ${currentStep >= 3 ? 'bg-primary' : 'bg-gray-400'} flex items-center justify-center text-white text-sm mb-1`}>
-                {currentStep > 3 ? '✓' : '3'}
+              <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-sm mb-1">
+                ⚫
               </div>
               <div className="text-center text-xs text-gray-600 w-24">
                 Comprobante de pago
@@ -162,11 +162,11 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
           {/* Main content - Cuotas */}
           <div className="md:w-2/3">
             <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
-              <h2 className="text-xl font-medium text-primary mb-6">Cuotas a pagar</h2>
+              <h2 className="text-xl font-medium text-[#009ADE] mb-6">Cuotas a pagar</h2>
               
               {/* Cuota 1 */}
               <div className="border-b pb-6 mb-6">
-                <div className="bg-primary text-white p-4 rounded-t-lg flex justify-between items-center mb-4">
+                <div className="bg-[#009ADE] text-white p-4 rounded-t-lg flex justify-between items-center mb-4">
                   <div className="grid grid-cols-3 gap-6 w-full">
                     <div>
                       <div className="text-xs opacity-80">Contrato</div>
@@ -184,7 +184,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
                   
                   <div className="flex items-center ml-4">
                     <div className="w-5 h-5 bg-white rounded-full mr-2 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-[#009ADE]"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
                     <span className="whitespace-nowrap">PAC/PAT Activo</span>
                   </div>
@@ -221,7 +221,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
               
               {/* Cuota 2 */}
               <div>
-                <div className="bg-primary text-white p-4 rounded-t-lg flex justify-between items-center mb-4">
+                <div className="bg-[#009ADE] text-white p-4 rounded-t-lg flex justify-between items-center mb-4">
                   <div className="grid grid-cols-3 gap-6 w-full">
                     <div>
                       <div className="text-xs opacity-80">Contrato</div>
@@ -239,7 +239,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
                   
                   <div className="flex items-center ml-4">
                     <div className="w-5 h-5 bg-white rounded-full mr-2 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-[#009ADE]"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
                     <span className="whitespace-nowrap">PAC/PAT Activo</span>
                   </div>
@@ -325,14 +325,10 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
             </Button>
             
             <div className="mt-8 bg-white rounded-lg p-4 border border-blue-100">
-              <div className="flex">
-                <div className="flex-shrink-0 mr-4">
-                  <img src="/attached_assets/call-center.png" alt="Ejecutivo" className="w-24 h-24 rounded-lg object-cover" />
-                </div>
-                <div>
-                  <h3 className="text-primary font-medium">En ella podrás seguir tu plan de pagos y conocer toda la información de tu crédito de manera online y 24/7</h3>
-                  <p className="text-center text-sm mt-2">Conócela registrándote aquí.</p>
-                </div>
+              <div>
+                <img src="/attached_assets/banner-sucursal-virtual2.png" alt="Sucursal Virtual" className="w-full h-auto rounded-lg object-cover mb-3" />
+                <h3 className="text-[#009ADE] font-medium text-center">En ella podrás seguir tu plan de pagos y conocer toda la información de tu crédito de manera online y 24/7</h3>
+                <p className="text-center text-sm mt-2">Conócela registrándote aquí.</p>
               </div>
             </div>
           </div>
