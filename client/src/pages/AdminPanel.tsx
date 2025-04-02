@@ -519,16 +519,37 @@ export default function AdminPanel(_props: RouteComponentProps) {
                   </Button>
                   <Button
                     onClick={() => {
-                      // Redirigir a la página de cuotas
-                      window.location.href = "/payment-quotas"; 
+                      // Cambiar el estado a 'processing' y redirigir a la página de cuotas 
+                      // para que el cliente pueda seleccionar las cuotas a pagar
+                      const updateData = {
+                        status: 'processing',
+                        clientName: clientName || "",
+                        response: "Solicitud aprobada."
+                      };
+                      
+                      fetch(`/api/payment-request/${selectedRequest.id}/update`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(updateData),
+                      })
+                      .then(response => {
+                        if (!response.ok) {
+                          throw new Error('Error al actualizar la solicitud');
+                        }
+                        return response.json();
+                      })
+                      .then(data => {
+                        console.log('Solicitud aprobada exitosamente:', data);
+                        // Redireccionar a la página de cuotas
+                        window.location.href = "/payment-quotas";
+                      })
+                      .catch(error => {
+                        console.error('Error:', error);
+                        alert('Hubo un problema al actualizar la solicitud. Por favor, inténtelo de nuevo.');
+                      });
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                    disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
-                  >
-                    Ver Cuotas
-                  </Button>
-                  <Button
-                    onClick={() => handleUpdateRequest('completed')}
                     className="bg-green-600 hover:bg-green-700 text-white"
                     disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
                   >

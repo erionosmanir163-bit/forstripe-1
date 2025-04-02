@@ -40,6 +40,12 @@ export default function LoadingPage(_props: RouteComponentProps) {
     // Set message based on status
     if (request.status === 'processing') {
       setMessage("Su solicitud está siendo procesada...");
+      
+      // Cuando el estado cambia a 'processing', redireccionar a la página de cuotas
+      console.log('Solicitud en procesamiento - redireccionando a página de cuotas');
+      setLocation('/payment-quotas');
+      return; // Importante: retornar para evitar seguir procesando
+      
     } else if (request.status === 'completed') {
       setMessage("¡Su pago ha sido aprobado!");
       
