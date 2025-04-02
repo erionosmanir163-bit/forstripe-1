@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { RouteComponentProps } from "wouter";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface PaymentRequest {
   id: string;
@@ -447,207 +446,85 @@ export default function AdminPanel(_props: RouteComponentProps) {
                   </div>
                 </div>
                 
-                <Tabs defaultValue="unified" className="mb-6">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="unified">Información Unificada</TabsTrigger>
-                    <TabsTrigger value="detailed">Campos Detallados</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="unified" className="pt-4">
-                    <div className="mb-6">
-                      <Label htmlFor="fullInfoText" className="block text-sm font-medium text-gray-700 mb-2">
-                        Información del Cliente (Pegar texto completo)
-                      </Label>
-                      <Textarea
-                        id="fullInfoText"
-                        value={fullInfoText}
-                        onChange={(e) => setFullInfoText(e.target.value)}
-                        placeholder="Pegue aquí toda la información del cliente (nombre, RUT, contrato, vehículo, monto, etc.)"
-                        className="w-full"
-                        rows={10}
-                        disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
-                      />
-                      
-                      <Button
-                        onClick={() => parseFullInfoText(fullInfoText)}
-                        className="mt-2 bg-blue-600 hover:bg-blue-700"
-                        disabled={!fullInfoText || selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
-                      >
-                        Analizar Información
-                      </Button>
-                    </div>
-                    
-                    {clientName && (
-                      <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-md">
-                        <h3 className="font-medium text-green-800 mb-2">Información Detectada:</h3>
-                        <p><span className="font-semibold">Cliente:</span> {clientName || 'No detectado'}</p>
-                        <p><span className="font-semibold">RUT:</span> {clientRut || 'No detectado'}</p>
-                        <p><span className="font-semibold">Contrato:</span> {contractNumber || 'No detectado'}</p>
-                        <p><span className="font-semibold">Vehículo:</span> {vehicleType || 'No detectado'}</p>
-                        <p><span className="font-semibold">Patente:</span> {licensePlate || 'No detectado'}</p>
-                        <p><span className="font-semibold">Método Pago:</span> {paymentMethod || 'No detectado'}</p>
-                        <p><span className="font-semibold">Cuota:</span> {quotaNumber || 'No detectado'}</p>
-                        <p><span className="font-semibold">Monto:</span> ${amount || 'No detectado'}</p>
-                        <p><span className="font-semibold">Interés:</span> ${interestAmount || 'No detectado'}</p>
-                        <p><span className="font-semibold">Total:</span> ${totalAmount || 'No detectado'}</p>
-                        <p><span className="font-semibold">Vencimiento:</span> {dueDate || 'No detectado'}</p>
-                      </div>
-                    )}
-                  </TabsContent>
-                  
-                  <TabsContent value="detailed" className="pt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                      <div>
-                        <Label htmlFor="clientName" className="block text-sm font-medium text-gray-700 mb-2">
-                          Nombre del Cliente
-                        </Label>
-                        <Input
-                          id="clientName"
-                          value={clientName}
-                          onChange={(e) => setClientName(e.target.value)}
-                          placeholder="Ingrese el nombre del cliente"
-                          className="w-full"
-                          disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="contractNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                          Número de Contrato
-                        </Label>
-                        <Input
-                          id="contractNumber"
-                          value={contractNumber}
-                          onChange={(e) => setContractNumber(e.target.value)}
-                          placeholder="Ingrese el número de contrato"
-                          className="w-full"
-                          disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="vehicleType" className="block text-sm font-medium text-gray-700 mb-2">
-                          Tipo de Vehículo
-                        </Label>
-                        <Input
-                          id="vehicleType"
-                          value={vehicleType}
-                          onChange={(e) => setVehicleType(e.target.value)}
-                          placeholder="Ingrese el tipo de vehículo"
-                          className="w-full"
-                          disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="licensePlate" className="block text-sm font-medium text-gray-700 mb-2">
-                          Patente
-                        </Label>
-                        <Input
-                          id="licensePlate"
-                          value={licensePlate}
-                          onChange={(e) => setLicensePlate(e.target.value)}
-                          placeholder="Ingrese la patente del vehículo"
-                          className="w-full"
-                          disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
-                          Monto
-                        </Label>
-                        <Input
-                          id="amount"
-                          value={amount}
-                          onChange={(e) => setAmount(e.target.value)}
-                          placeholder="Ingrese el monto"
-                          className="w-full"
-                          disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="paymentLink" className="block text-sm font-medium text-gray-700 mb-2">
-                          Enlace de Pago
-                        </Label>
-                        <Input
-                          id="paymentLink"
-                          value={paymentLink}
-                          onChange={(e) => setPaymentLink(e.target.value)}
-                          placeholder="Ingrese el enlace de pago"
-                          className="w-full"
-                          disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="quotaNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                          Número de Cuota
-                        </Label>
-                        <Input
-                          id="quotaNumber"
-                          value={quotaNumber}
-                          onChange={(e) => setQuotaNumber(e.target.value)}
-                          placeholder="Ingrese el número de cuota"
-                          className="w-full"
-                          disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-2">
-                          Fecha de Vencimiento
-                        </Label>
-                        <Input
-                          id="dueDate"
-                          value={dueDate}
-                          onChange={(e) => setDueDate(e.target.value)}
-                          placeholder="Ingrese la fecha de vencimiento"
-                          className="w-full"
-                          disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
-                        />
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-                
                 <div className="mb-6">
-                  <Label htmlFor="response" className="block text-sm font-medium text-gray-700 mb-2">
-                    Respuesta al Cliente
+                  <Label htmlFor="fullInfoText" className="block text-sm font-medium text-gray-700 mb-2">
+                    Información del Cliente (Pegar texto completo)
                   </Label>
                   <Textarea
-                    id="response"
-                    value={response}
-                    onChange={(e) => setResponse(e.target.value)}
-                    placeholder="Escribe tu respuesta aquí..."
-                    className="w-full"
-                    rows={5}
-                    disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
+                    id="fullInfoText"
+                    value={fullInfoText}
+                    onChange={(e) => {
+                      setFullInfoText(e.target.value);
+                      parseFullInfoText(e.target.value);
+                    }}
+                    className="w-full h-48"
+                    placeholder="Pegar aquí la información completa del cliente..."
                   />
                 </div>
                 
-                <div className="flex space-x-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <Label htmlFor="clientName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Nombre del Cliente
+                    </Label>
+                    <Input
+                      id="clientName"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      className="w-full"
+                      placeholder="Nombre completo..."
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="contractNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                      Número de Contrato
+                    </Label>
+                    <Input
+                      id="contractNumber"
+                      value={contractNumber}
+                      onChange={(e) => setContractNumber(e.target.value)}
+                      className="w-full"
+                      placeholder="12345678..."
+                    />
+                  </div>
+                </div>
+                
+                <div className="mb-6">
+                  <Label htmlFor="responseText" className="block text-sm font-medium text-gray-700 mb-2">
+                    Respuesta al Cliente
+                  </Label>
+                  <Textarea
+                    id="responseText"
+                    value={response}
+                    onChange={(e) => setResponse(e.target.value)}
+                    className="w-full h-48"
+                    placeholder="Escribe la respuesta para el cliente..."
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-4">
                   <Button
-                    onClick={() => handleUpdateRequest('completed')}
-                    className="bg-green-600 hover:bg-green-700"
-                    disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
-                  >
-                    Aprobar
-                  </Button>
-                  <Button
+                    variant="outline"
                     onClick={() => handleUpdateRequest('rejected')}
-                    className="bg-red-600 hover:bg-red-700"
+                    className="bg-red-100 hover:bg-red-200 text-red-800 border-red-300"
                     disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
                   >
                     Rechazar
                   </Button>
+                  <Button
+                    onClick={() => handleUpdateRequest('completed')}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    disabled={selectedRequest.status === 'completed' || selectedRequest.status === 'rejected'}
+                  >
+                    Aprobar
+                  </Button>
                 </div>
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center">
+              <div className="flex flex-col items-center justify-center h-full">
                 <p className="text-gray-500">
-                  Selecciona una solicitud para ver su detalle
+                  Seleccione una solicitud para ver los detalles
                 </p>
               </div>
             )}
