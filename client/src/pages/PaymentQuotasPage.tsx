@@ -359,8 +359,8 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
               <Button 
                 onClick={handleContinue}
                 disabled={selectedQuotas.length === 0}
-                className="w-full bg-gray-300 hover:bg-gray-400 text-gray-800"
-                variant="outline"
+                className={`w-full ${selectedQuotas.length > 0 ? 'bg-[#009ADE] hover:bg-[#0089c7] text-white' : 'bg-gray-300 hover:bg-gray-400 text-gray-800'}`}
+                variant={selectedQuotas.length > 0 ? 'default' : 'outline'}
               >
                 Continuar
               </Button>
