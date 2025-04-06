@@ -80,14 +80,127 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
   // Función para extraer datos desde la respuesta del administrador
   const extractUserDataFromResponse = (responseText: string) => {
     try {
-      // Extraer nombre y RUT
-      const nameRutMatch = responseText.match(/([A-ZÁÉÍÓÚÑ\s]+)\s+(\d{1,2}\.\d{3}\.\d{3}-[0-9kK])/);
-      const clientName = nameRutMatch ? nameRutMatch[1].trim() : "Usuario";
-      const clientRut = nameRutMatch ? nameRutMatch[2] : "";
+      console.log("Analizando respuesta:", responseText);
+      
+      // Separar el texto en líneas para facilitar el procesamiento
+      const lines = responseText.split(/\r?\n/);
+      console.log("Líneas:", lines);
+      
+      // Inicializar los valores predeterminados
+      let clientName = "Usuario";
+      let clientRut = "";
+      let contractNumber = "000000";
+      let licensePlate = "XX-XX-XX";
+      let vehicleType = "AUTOMÓVIL";
+      let quotaNumber = "1";
+      let daysUntilDue = 10;
+      let quotaAmount = "$0";
+      let interestAmount = "$0";
+      let totalAmount = "$0";
+      let pacPatActive = false;
+      
+      // Extraer nombre y RUT de la primera línea
+      const firstLine = lines[0] || "";
+      const nameRutMatch = firstLine.match(/Estimado\/a\s+([A-ZÁÉÍÓÚÑ\s]+)\s+(\d{1,2}\.\d{3}\.\d{3}-[0-9kK])/);
+      
+      if (nameRutMatch) {
+        clientName = nameRutMatch[1].trim();
+        clientRut = nameRutMatch[2].trim();
+        console.log("Nombre extraído:", clientName);
+        console.log("RUT extraído:", clientRut);
+      } else {
+        // Buscar RUT en cualquier línea
+        for (const line of lines) {
+          const rutMatch = line.match(/(\d{1,2}\.\d{3}\.\d{3}-[0-9kK])/);
+          if (rutMatch) {
+            clientRut = rutMatch[1];
+            console.log("RUT extraído (alt):", clientRut);
+            break;
+          }
+        }
+      }
+      
+      // Buscar información de contrato y vehículo en cada línea
+      for (const line of lines) {
+        // Buscar contrato
+        if (line.includes("Contrato:")) {
+          const match = line.match(/Contrato:\s*([A-Z0-9]+)/);
+          if (match) {
+            contractNumber = match[1].trim();
+            console.log("Contrato encontrado:", contractNumber);
+          }
+        }
+        
+        // Buscar patente
+        if (line.includes("Patente:")) {
+          const match = line.match(/Patente:\s*([A-Z0-9•-]+)/);
+          if (match) {
+            licensePlate = match[1].trim();
+            console.log("Patente encontrada:", licensePlate);
+          }
+        }
+        
+        // Buscar vehículo
+        if (line.includes("Vehículo:")) {
+          const match = line.match(/Vehículo:\s*(.+)/);
+          if (match) {
+            vehicleType = match[1].trim();
+            console.log("Vehículo encontrado:", vehicleType);
+          }
+        }
+        
+        // Buscar número de cuota
+        if (line.includes("Cuota N°")) {
+          const match = line.match(/Cuota N°(\d+)/);
+          if (match) {
+            quotaNumber = match[1];
+            console.log("Número de cuota:", quotaNumber);
+          }
+        }
+        
+        // Buscar días hasta vencimiento
+        if (line.includes("Vence en")) {
+          const match = line.match(/Vence en\s+(\d+)\s+días?/);
+          if (match) {
+            daysUntilDue = parseInt(match[1]);
+            console.log("Días hasta vencimiento:", daysUntilDue);
+          }
+        }
+        
+        // Buscar monto de cuota
+        if (line.includes("Monto:")) {
+          const match = line.match(/Monto:\s*\$([0-9.]+)/);
+          if (match) {
+            quotaAmount = "$" + match[1];
+            console.log("Monto de cuota:", quotaAmount);
+          }
+        }
+        
+        // Buscar interés
+        if (line.includes("Interés:")) {
+          const match = line.match(/Interés:\s*\$([0-9.]+)/);
+          if (match) {
+            interestAmount = "$" + match[1];
+            console.log("Interés:", interestAmount);
+          }
+        }
+        
+        // Buscar total
+        if (line.includes("Total:")) {
+          const match = line.match(/Total:\s*\$([0-9.]+)/);
+          if (match) {
+            totalAmount = "$" + match[1];
+            console.log("Total:", totalAmount);
+          }
+        }
+      }
       
       // Determinar si debe mostrar suscripción PAC/PAT
       const showPacPat = responseText.includes("Suscripción automática a PAC o PAT") || 
-                        responseText.includes("PAC o PAT");
+                          responseText.includes("PAC o PAT") ||
+                          responseText.includes("suscribir el pago");
+      
+      console.log("Mostrar PAC/PAT:", showPacPat);
       
       // Extraer información de advertencia si existe
       let warningMessage: string | undefined = undefined;
@@ -95,47 +208,87 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
         const warningRegex = /(El pago vía PAC\/PAT puede tardar[^]*?\*\*[^]*?señalado)/;
         const warningMatch = responseText.match(warningRegex);
         warningMessage = warningMatch ? warningMatch[1] : undefined;
+        console.log("Mensaje de advertencia extraído:", warningMessage);
       }
       
-      // Extraer información de las cuotas
-      const quotas: QuotaInfo[] = [];
+      // Crear la cuota con la información extraída
+      const quotas: QuotaInfo[] = [{
+        contractNumber,
+        licensePlate,
+        vehicleType,
+        pacPatActive,
+        quotaNumber,
+        quotaAmount,
+        interestAmount,
+        totalAmount,
+        daysUntilDue
+      }];
       
-      // Extraer contratos, matrículas y vehículos
-      const contractRegex = /Contrato\s+([A-Z0-9]+)\s+Patente\s+([A-Z0-9•]+)\s+Vehículo\s+([A-ZÁÉÍÓÚÑ0-9\s]+)/g;
+      console.log("Cuota extraída:", quotas[0]);
       
-      const contracts: {contractNumber: string, licensePlate: string, vehicleType: string, pacPatActive: boolean}[] = [];
-      let contractMatch: RegExpExecArray | null;
-      
-      while ((contractMatch = contractRegex.exec(responseText)) !== null) {
-        contracts.push({
-          contractNumber: contractMatch[1].trim(),
-          licensePlate: contractMatch[2].trim(),
-          vehicleType: contractMatch[3].trim(),
-          pacPatActive: responseText.includes("PAC/PAT Activo")
-        });
-      }
-      
-      // Extraer cuotas, montos e intereses
-      const quotaRegex = /Cuota N°(\d+)\s+Cuota\s+Interés Mora\s+Total Cuota\s+Vence en (\d+) días?\s+\$([0-9.]+)\s+\$([0-9.]+)\s+\$([0-9.]+)/g;
-      
-      let index = 0;
-      let quotaMatch: RegExpExecArray | null;
-      
-      while ((quotaMatch = quotaRegex.exec(responseText)) !== null) {
-        if (index < contracts.length) {
+      // Si no se encontraron cuotas pero hay información de contrato, intentamos un enfoque alternativo
+      if (quotas.length === 0 && responseText.includes("Contrato")) {
+        console.log("Enfoque alternativo para extraer cuotas");
+        
+        // Buscar información del contrato
+        const contractNumberMatch = responseText.match(/Contrato\s+([A-Z0-9]+)/);
+        const licensePlateMatch = responseText.match(/Patente\s+([A-Z0-9•-]+)/);
+        const vehicleTypeMatch = responseText.match(/Vehículo\s+([A-ZÁÉÍÓÚÑ0-9\s]+)/);
+        
+        const contractNumber = contractNumberMatch ? contractNumberMatch[1].trim() : "N/A";
+        const licensePlate = licensePlateMatch ? licensePlateMatch[1].trim() : "XX-XX-XX";
+        const vehicleType = vehicleTypeMatch ? vehicleTypeMatch[1].trim() : "VEHÍCULO";
+        const pacPatActive = responseText.includes("PAC/PAT Activo");
+        
+        // Buscar información de cuota
+        const quotaNumberMatch = responseText.match(/Cuota N°(\d+)/);
+        const daysMatch = responseText.match(/Vence en (\d+) días?/);
+        const amountMatches = responseText.match(/\$([0-9.]+)(?:\s+\$([0-9.]+))?(?:\s+\$([0-9.]+))?/);
+        
+        if (quotaNumberMatch || daysMatch || amountMatches) {
+          const quotaNumber = quotaNumberMatch ? quotaNumberMatch[1] : "1";
+          const daysUntilDue = daysMatch ? parseInt(daysMatch[1]) : 10;
+          
+          let quotaAmount = "$0";
+          let interestAmount = "$0"; 
+          let totalAmount = "$0";
+          
+          if (amountMatches) {
+            if (amountMatches[1]) quotaAmount = "$" + amountMatches[1];
+            if (amountMatches[2]) interestAmount = "$" + amountMatches[2];
+            if (amountMatches[3]) totalAmount = "$" + amountMatches[3];
+          }
+          
           quotas.push({
-            contractNumber: contracts[index].contractNumber,
-            licensePlate: contracts[index].licensePlate,
-            vehicleType: contracts[index].vehicleType,
-            pacPatActive: contracts[index].pacPatActive,
-            quotaNumber: quotaMatch[1],
-            quotaAmount: "$" + quotaMatch[3],
-            interestAmount: "$" + quotaMatch[4],
-            totalAmount: "$" + quotaMatch[5],
-            daysUntilDue: parseInt(quotaMatch[2])
+            contractNumber,
+            licensePlate,
+            vehicleType,
+            pacPatActive,
+            quotaNumber,
+            quotaAmount,
+            interestAmount,
+            totalAmount,
+            daysUntilDue
           });
-          index++;
+          
+          console.log("Cuota extraída (enfoque alternativo):", quotas[0]);
         }
+      }
+      
+      // Si aún no hay cuotas, crear una por defecto para evitar errores
+      if (quotas.length === 0) {
+        console.log("No se encontraron cuotas, creando una por defecto");
+        quotas.push({
+          contractNumber: "000000",
+          licensePlate: "XX-XX-XX",
+          vehicleType: "AUTOMÓVIL",
+          pacPatActive: false,
+          quotaNumber: "1",
+          quotaAmount: "$0",
+          interestAmount: "$0",
+          totalAmount: "$0",
+          daysUntilDue: 10
+        });
       }
       
       return {
@@ -162,23 +315,29 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
       }
       
       try {
+        console.log("Obteniendo datos para requestId:", requestId);
         const response = await fetch(`/api/payment-request/${requestId}`);
         if (!response.ok) {
           throw new Error('Error al obtener datos de la solicitud');
         }
         
         const data = await response.json();
+        console.log("Datos recibidos del API:", data);
         
         if (data.response) {
+          console.log("Texto de respuesta encontrado:", data.response);
           // La solicitud fue aprobada y tiene una respuesta
           const extractedData = extractUserDataFromResponse(data.response);
+          console.log("Datos extraídos:", extractedData);
           if (extractedData) {
             setUserData(extractedData);
           } else {
+            console.log("No se pudieron extraer datos, usando valores predeterminados");
             // Si no se puede extraer, usar datos predeterminados
             fallbackToDefaultData();
           }
         } else {
+          console.log("Sin texto de respuesta, usando valores predeterminados");
           // Usar datos predeterminados si no hay respuesta
           fallbackToDefaultData();
         }

@@ -226,8 +226,18 @@ export default function AdminPanel(_props: RouteComponentProps) {
     // Generar enlace de pago por defecto (ejemplo)
     setPaymentLink(`https://pago.ejemplo.cl/${contractNumber || '000000'}`);
     
-    // Generar respuesta automática
-    setResponse(`Estimado/a ${clientName || ''},\n\nHemos recibido su solicitud de pago para el contrato ${contractNumber || ''}, vehículo ${vehicleType || ''}, por un monto de $${amount || ''} correspondiente a la cuota N°${quotaNumber || ''} con vencimiento el ${dueDate || ''}.\n\nPara realizar el pago, por favor acceda al siguiente enlace:\n${paymentLink || 'https://pago.ejemplo.cl'}\n\nAtentamente,\nServicio al Cliente`);
+    // Generar respuesta automática en un formato estructurado simple para fácil extracción
+    setResponse(`Estimado/a ${clientName || 'Cliente'} ${clientRut || '12.345.678-9'}\n\n` +
+    `Contrato: ${contractNumber || 'A12345'}\n` +
+    `Patente: ${licensePlate || 'AB-CD-12'}\n` +
+    `Vehículo: ${vehicleType || 'AUTOMÓVIL 2023'}\n\n` +
+    `Cuota N°${quotaNumber || '1'}\n` +
+    `Vence en ${dueDate ? '5' : '10'} días\n` +
+    `Monto: $${amount || '100.000'}\n` +
+    `Interés: $${interestAmount || '0'}\n` +
+    `Total: $${totalAmount || '100.000'}\n\n` +
+    `Para realizar el pago, por favor acceda al siguiente enlace:\n${paymentLink || 'https://pago.ejemplo.cl'}\n\n` +
+    `Atentamente,\nServicio al Cliente`);
   };
 
   // Handle request selection
