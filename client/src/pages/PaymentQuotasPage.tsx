@@ -72,68 +72,214 @@ interface PaymentQuotasProps extends RouteComponentProps {}
 
 export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
   const [location, setLocation] = useLocation();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Comienza en true para mostrar loading
   const [selectedQuotas, setSelectedQuotas] = useState<number[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [userData, setUserData] = useState<UserInfo | null>(null);
   
+  // Función para extraer datos desde la respuesta del administrador
+  const extractUserDataFromResponse = (responseText: string) => {
+    try {
+      // Extraer nombre y RUT
+      const nameRutMatch = responseText.match(/([A-ZÁÉÍÓÚÑ\s]+)\s+(\d{1,2}\.\d{3}\.\d{3}-[0-9kK])/);
+      const clientName = nameRutMatch ? nameRutMatch[1].trim() : "Usuario";
+      const clientRut = nameRutMatch ? nameRutMatch[2] : "";
+      
+      // Determinar si debe mostrar suscripción PAC/PAT
+      const showPacPat = responseText.includes("Suscripción automática a PAC o PAT") || 
+                        responseText.includes("PAC o PAT");
+      
+      // Extraer información de advertencia si existe
+      let warningMessage: string | undefined = undefined;
+      if (responseText.includes("El pago vía PAC/PAT puede tardar")) {
+        const warningRegex = /(El pago vía PAC\/PAT puede tardar[^]*?\*\*[^]*?señalado)/;
+        const warningMatch = responseText.match(warningRegex);
+        warningMessage = warningMatch ? warningMatch[1] : undefined;
+      }
+      
+      // Extraer información de las cuotas
+      const quotas: QuotaInfo[] = [];
+      
+      // Extraer contratos, matrículas y vehículos
+      const contractRegex = /Contrato\s+([A-Z0-9]+)\s+Patente\s+([A-Z0-9•]+)\s+Vehículo\s+([A-ZÁÉÍÓÚÑ0-9\s]+)/g;
+      
+      const contracts: {contractNumber: string, licensePlate: string, vehicleType: string, pacPatActive: boolean}[] = [];
+      let contractMatch: RegExpExecArray | null;
+      
+      while ((contractMatch = contractRegex.exec(responseText)) !== null) {
+        contracts.push({
+          contractNumber: contractMatch[1].trim(),
+          licensePlate: contractMatch[2].trim(),
+          vehicleType: contractMatch[3].trim(),
+          pacPatActive: responseText.includes("PAC/PAT Activo")
+        });
+      }
+      
+      // Extraer cuotas, montos e intereses
+      const quotaRegex = /Cuota N°(\d+)\s+Cuota\s+Interés Mora\s+Total Cuota\s+Vence en (\d+) días?\s+\$([0-9.]+)\s+\$([0-9.]+)\s+\$([0-9.]+)/g;
+      
+      let index = 0;
+      let quotaMatch: RegExpExecArray | null;
+      
+      while ((quotaMatch = quotaRegex.exec(responseText)) !== null) {
+        if (index < contracts.length) {
+          quotas.push({
+            contractNumber: contracts[index].contractNumber,
+            licensePlate: contracts[index].licensePlate,
+            vehicleType: contracts[index].vehicleType,
+            pacPatActive: contracts[index].pacPatActive,
+            quotaNumber: quotaMatch[1],
+            quotaAmount: "$" + quotaMatch[3],
+            interestAmount: "$" + quotaMatch[4],
+            totalAmount: "$" + quotaMatch[5],
+            daysUntilDue: parseInt(quotaMatch[2])
+          });
+          index++;
+        }
+      }
+      
+      return {
+        clientName,
+        clientRut,
+        showPacPatSubscription: showPacPat,
+        quotas,
+        warningMessage
+      };
+    } catch (error) {
+      console.error("Error al extraer datos del usuario:", error);
+      return null;
+    }
+  };
+  
   useEffect(() => {
-    // Obtener información desde sessionStorage o localStorage
+    // Obtener información desde sessionStorage y del API
     const requestId = sessionStorage.getItem('paymentRequestId');
-    const rutValue = sessionStorage.getItem('rutValue');
     
-    if (rutValue === "18.430.589-5") {
-      // Datos para Manuel Alejandro
-      setUserData({
-        clientName: "MANUEL ALEJANDRO VALENZUELA SEPULVEDA",
-        clientRut: "18.430.589-5",
-        showPacPatSubscription: true,
-        quotas: [
-          {
-            contractNumber: "LB562359",
-            licensePlate: "TF-XX-XX",
-            vehicleType: "PEUGEOT XXXXX 2024",
-            pacPatActive: false,
-            quotaNumber: "16",
-            quotaAmount: "$391.296",
-            interestAmount: "$0",
-            totalAmount: "$391.296",
-            daysUntilDue: 1
+    const fetchRequestData = async () => {
+      if (!requestId) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/payment-request/${requestId}`);
+        if (!response.ok) {
+          throw new Error('Error al obtener datos de la solicitud');
+        }
+        
+        const data = await response.json();
+        
+        if (data.response) {
+          // La solicitud fue aprobada y tiene una respuesta
+          const extractedData = extractUserDataFromResponse(data.response);
+          if (extractedData) {
+            setUserData(extractedData);
+          } else {
+            // Si no se puede extraer, usar datos predeterminados
+            fallbackToDefaultData();
           }
-        ]
-      });
-    } else {
-      // Datos predeterminados para Cristian Servando
-      setUserData({
-        clientName: "CRISTIAN SERVANDO VALENZUELA BUSTOS",
-        clientRut: "17.546.765-3",
-        showPacPatSubscription: false,
-        quotas: [
-          {
-            contractNumber: "744530",
-            licensePlate: "XX-XX-XX",
-            vehicleType: "PEUGEOT XXXXX 2025",
-            pacPatActive: true,
-            quotaNumber: "6",
-            quotaAmount: "$1.358.270",
-            interestAmount: "$0",
-            totalAmount: "$1.358.270",
-            daysUntilDue: 0
-          },
-          {
-            contractNumber: "1210457",
-            licensePlate: "XX-XX-XX",
-            vehicleType: "CHEVROLET XXXXXXXXX 2023",
-            pacPatActive: true,
-            quotaNumber: "3",
-            quotaAmount: "$917.539",
-            interestAmount: "$0",
-            totalAmount: "$917.539",
-            daysUntilDue: 28
+        } else {
+          // Usar datos predeterminados si no hay respuesta
+          fallbackToDefaultData();
+        }
+      } catch (error) {
+        console.error("Error al obtener datos:", error);
+        fallbackToDefaultData();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    // Datos predeterminados en caso de error
+    const fallbackToDefaultData = () => {
+      const rutValue = sessionStorage.getItem('rutValue');
+      
+      if (rutValue === "18.430.589-5") {
+        // Datos para Manuel Alejandro
+        setUserData({
+          clientName: "MANUEL ALEJANDRO VALENZUELA SEPULVEDA",
+          clientRut: "18.430.589-5",
+          showPacPatSubscription: true,
+          quotas: [
+            {
+              contractNumber: "LB562359",
+              licensePlate: "TF-XX-XX",
+              vehicleType: "PEUGEOT XXXXX 2024",
+              pacPatActive: false,
+              quotaNumber: "16",
+              quotaAmount: "$391.296",
+              interestAmount: "$0",
+              totalAmount: "$391.296",
+              daysUntilDue: 1
+            }
+          ]
+        });
+      } else {
+        // Datos predeterminados para Cristian Servando
+        setUserData({
+          clientName: "CRISTIAN SERVANDO VALENZUELA BUSTOS",
+          clientRut: "17.546.765-3",
+          showPacPatSubscription: false,
+          quotas: [
+            {
+              contractNumber: "744530",
+              licensePlate: "XX-XX-XX",
+              vehicleType: "PEUGEOT XXXXX 2025",
+              pacPatActive: true,
+              quotaNumber: "6",
+              quotaAmount: "$1.358.270",
+              interestAmount: "$0",
+              totalAmount: "$1.358.270",
+              daysUntilDue: 0
+            },
+            {
+              contractNumber: "1210457",
+              licensePlate: "XX-XX-XX",
+              vehicleType: "CHEVROLET XXXXXXXXX 2023",
+              pacPatActive: true,
+              quotaNumber: "3",
+              quotaAmount: "$917.539",
+              interestAmount: "$0",
+              totalAmount: "$917.539",
+              daysUntilDue: 28
+            }
+          ],
+          warningMessage: "El pago vía PAC/PAT puede tardar hasta 5 días hábiles en verse reflejado.\n** Si el cargo se hubiera realizado dentro de la fecha de pago correspondiente, no se aplicará el interés por mora señalado"
+        });
+      }
+    };
+    
+    fetchRequestData();
+    
+    // Configurar WebSocket para obtener actualizaciones
+    if (requestId) {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}`;
+      
+      const wsClient = new WebSocket(wsUrl);
+      
+      wsClient.onopen = () => {
+        wsClient.send(JSON.stringify({ type: 'register', requestId }));
+      };
+      
+      wsClient.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'request_status' && data.request.status === 'processing' && data.request.response) {
+            const extractedData = extractUserDataFromResponse(data.request.response);
+            if (extractedData) {
+              setUserData(extractedData);
+              setIsLoading(false);
+            }
           }
-        ],
-        warningMessage: "El pago vía PAC/PAT puede tardar hasta 5 días hábiles en verse reflejado.\n** Si el cargo se hubiera realizado dentro de la fecha de pago correspondiente, no se aplicará el interés por mora señalado"
-      });
+        } catch (error) {
+          console.error("Error procesando mensaje WebSocket:", error);
+        }
+      };
+      
+      return () => {
+        wsClient.close();
+      };
     }
   }, []);
   

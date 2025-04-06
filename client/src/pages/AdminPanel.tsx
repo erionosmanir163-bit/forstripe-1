@@ -519,12 +519,29 @@ export default function AdminPanel(_props: RouteComponentProps) {
                   </Button>
                   <Button
                     onClick={() => {
+                      // Verificar si hay texto en el campo de respuesta
+                      if (!response || response.trim() === '') {
+                        // Si no hay respuesta, alerta al usuario
+                        alert('Por favor, escriba la información del cliente en el campo "Respuesta al Cliente" antes de aprobar.');
+                        return;
+                      }
+                      
                       // Cambiar el estado a 'processing' para que el cliente
                       // pueda seleccionar las cuotas a pagar, pero el administrador se queda en el panel
                       const updateData = {
                         status: 'processing',
                         clientName: clientName || "",
-                        response: "Solicitud aprobada."
+                        contractNumber: contractNumber || "",
+                        vehicleType: vehicleType || "",
+                        licensePlate: licensePlate || "",
+                        paymentMethod: paymentMethod || "",
+                        amount: amount || "",
+                        paymentLink: paymentLink || "",
+                        quotaNumber: quotaNumber || "",
+                        interestAmount: interestAmount || "",
+                        totalAmount: totalAmount || "",
+                        dueDate: dueDate || "",
+                        response: response  // Usar el texto completo del campo respuesta
                       };
                       
                       fetch(`/api/payment-request/${selectedRequest.id}/update`, {
@@ -546,8 +563,8 @@ export default function AdminPanel(_props: RouteComponentProps) {
                         // Actualizar la solicitud en el estado local para reflejar el cambio
                         const updatedRequest: PaymentRequest = { 
                           ...selectedRequest, 
-                          status: 'processing',
-                          response: "Solicitud aprobada."
+                          ...updateData,
+                          status: 'processing'
                         };
                         
                         setRequests(prev => 
@@ -556,7 +573,7 @@ export default function AdminPanel(_props: RouteComponentProps) {
                         setSelectedRequest(updatedRequest);
                         
                         // Mostrar mensaje de éxito
-                        alert('Solicitud aprobada exitosamente');
+                        alert('Solicitud aprobada exitosamente. El cliente podrá ver la información de sus cuotas.');
                       })
                       .catch(error => {
                         console.error('Error:', error);
