@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { RouteComponentProps, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import ForumLoader from "@/components/ForumLoader";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { apiRequest } from "@/lib/queryClient";
 
 // Componente personalizado de checkbox con un check (chulo) visible
 interface CustomCheckboxProps {
@@ -60,50 +60,91 @@ interface QuotaInfo {
   daysUntilDue: number;
 }
 
+interface UserInfo {
+  clientName: string;
+  clientRut: string;
+  showPacPatSubscription: boolean;
+  quotas: QuotaInfo[];
+  warningMessage?: string;
+}
+
 interface PaymentQuotasProps extends RouteComponentProps {}
 
 export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
   const [location, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
-  const [clientName] = useState("CRISTIAN SERVANDO VALENZUELA BUSTOS");
-  const [clientRut] = useState("17.546.765-3");
   const [selectedQuotas, setSelectedQuotas] = useState<number[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
+  const [userData, setUserData] = useState<UserInfo | null>(null);
   
-  // Datos de cuotas (simulados)
-  const [quotas] = useState<QuotaInfo[]>([
-    {
-      contractNumber: "744530",
-      licensePlate: "XX-XX-XX",
-      vehicleType: "PEUGEOT XXXXX 2025",
-      pacPatActive: true,
-      quotaNumber: "6",
-      quotaAmount: "$1.358.270",
-      interestAmount: "$0",
-      totalAmount: "$1.358.270",
-      daysUntilDue: 4
-    },
-    {
-      contractNumber: "1210457",
-      licensePlate: "XX-XX-XX",
-      vehicleType: "CHEVROLET XXXXXXXXX 2023",
-      pacPatActive: true,
-      quotaNumber: "2",
-      quotaAmount: "$917.539",
-      interestAmount: "$0",
-      totalAmount: "$917.539",
-      daysUntilDue: 1
+  useEffect(() => {
+    // Obtener información desde sessionStorage o localStorage
+    const requestId = sessionStorage.getItem('paymentRequestId');
+    const rutValue = sessionStorage.getItem('rutValue');
+    
+    if (rutValue === "18.430.589-5") {
+      // Datos para Manuel Alejandro
+      setUserData({
+        clientName: "MANUEL ALEJANDRO VALENZUELA SEPULVEDA",
+        clientRut: "18.430.589-5",
+        showPacPatSubscription: true,
+        quotas: [
+          {
+            contractNumber: "LB562359",
+            licensePlate: "TF-XX-XX",
+            vehicleType: "PEUGEOT XXXXX 2024",
+            pacPatActive: false,
+            quotaNumber: "16",
+            quotaAmount: "$391.296",
+            interestAmount: "$0",
+            totalAmount: "$391.296",
+            daysUntilDue: 1
+          }
+        ]
+      });
+    } else {
+      // Datos predeterminados para Cristian Servando
+      setUserData({
+        clientName: "CRISTIAN SERVANDO VALENZUELA BUSTOS",
+        clientRut: "17.546.765-3",
+        showPacPatSubscription: false,
+        quotas: [
+          {
+            contractNumber: "744530",
+            licensePlate: "XX-XX-XX",
+            vehicleType: "PEUGEOT XXXXX 2025",
+            pacPatActive: true,
+            quotaNumber: "6",
+            quotaAmount: "$1.358.270",
+            interestAmount: "$0",
+            totalAmount: "$1.358.270",
+            daysUntilDue: 0
+          },
+          {
+            contractNumber: "1210457",
+            licensePlate: "XX-XX-XX",
+            vehicleType: "CHEVROLET XXXXXXXXX 2023",
+            pacPatActive: true,
+            quotaNumber: "3",
+            quotaAmount: "$917.539",
+            interestAmount: "$0",
+            totalAmount: "$917.539",
+            daysUntilDue: 28
+          }
+        ],
+        warningMessage: "El pago vía PAC/PAT puede tardar hasta 5 días hábiles en verse reflejado.\n** Si el cargo se hubiera realizado dentro de la fecha de pago correspondiente, no se aplicará el interés por mora señalado"
+      });
     }
-  ]);
+  }, []);
   
   // Calcular el total a pagar
   const getTotal = () => {
-    if (selectedQuotas.length === 0) return "$0";
+    if (!userData || selectedQuotas.length === 0) return "$0";
     
     let total = 0;
     
     selectedQuotas.forEach(index => {
-      const quota = quotas[index];
+      const quota = userData.quotas[index];
       // Convertir el string con formato de dinero a un número
       const amount = parseFloat(quota.totalAmount.replace(/[$,.]/g, ''));
       total += amount;
@@ -153,6 +194,15 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
     );
   }
   
+  if (!userData) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <LoadingSpinner size="large" />
+        <p className="mt-4 text-gray-600">Cargando información del cliente...</p>
+      </div>
+    );
+  }
+  
   return (
     <div className="min-h-screen flex flex-col bg-[#F1F1F1] overflow-x-hidden">
       <Header />
@@ -165,8 +215,8 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
               <img src="/images/user.png" alt="Usuario" className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-[#009ADE] font-medium">{clientName}</p>
-              <p className="text-gray-600 text-sm">{clientRut}</p>
+              <p className="text-[#009ADE] font-medium">{userData.clientName}</p>
+              <p className="text-gray-600 text-sm">{userData.clientRut}</p>
             </div>
           </div>
           
@@ -204,116 +254,105 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
           <div className="flex flex-col md:flex-row gap-6">
             {/* Main content - Cuotas */}
             <div className="md:w-2/3">
+              {/* Bloque de suscripción PAC/PAT si corresponde */}
+              {userData.showPacPatSubscription && (
+                <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
+                  <div className="flex">
+                    <div className="w-1/3">
+                      <img src="/images/card-pac-pat.png" alt="Tarjeta PAC/PAT" className="w-full" />
+                    </div>
+                    <div className="w-2/3 pl-6">
+                      <h2 className="text-xl font-medium text-gray-700 mb-2">Suscripción automática a PAC o PAT</h2>
+                      <p className="text-gray-600 text-sm mb-4">
+                        Puedes suscribir el pago de tus cuotas de manera automática (PAC o PAT).
+                        Este servicio es totalmente gratuito
+                      </p>
+                      <button className="bg-[#E74F32] text-white px-4 py-2 rounded">
+                        Suscribir a PAC/PAT
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
                 <h2 className="text-xl font-medium text-[#009ADE] mb-6">Cuotas a pagar</h2>
                 
-                {/* Cuota 1 */}
-                <div className="border-b pb-6 mb-6">
-                  <div className="bg-[#009ADE] text-white p-4 rounded-t-lg flex justify-between items-center mb-4">
-                    <div className="grid grid-cols-3 gap-6 w-full">
-                      <div>
-                        <div className="text-xs opacity-80">Contrato</div>
-                        <div className="font-medium">{quotas[0].contractNumber}</div>
+                {/* Mapeo de cuotas dinámicamente */}
+                {userData.quotas.map((quota, index) => (
+                  <div key={index} className={index < userData.quotas.length - 1 ? "border-b pb-6 mb-6" : ""}>
+                    <div className="bg-[#009ADE] text-white p-4 rounded-t-lg flex justify-between items-center mb-4">
+                      <div className="grid grid-cols-3 gap-6 w-full">
+                        <div>
+                          <div className="text-xs opacity-80">Contrato</div>
+                          <div className="font-medium">{quota.contractNumber}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs opacity-80">Patente</div>
+                          <div className="font-medium">{quota.licensePlate.replace(/-/g, '•')}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs opacity-80">Vehículo</div>
+                          <div className="font-medium">{quota.vehicleType}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-xs opacity-80">Patente</div>
-                        <div className="font-medium">{quotas[0].licensePlate}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs opacity-80">Vehículo</div>
-                        <div className="font-medium">{quotas[0].vehicleType}</div>
-                      </div>
+                      
+                      {quota.pacPatActive && (
+                        <div className="flex items-center ml-4">
+                          <div className="w-5 h-5 bg-white rounded-full mr-2 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-[#009ADE]"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                          </div>
+                          <span className="whitespace-nowrap">PAC/PAT Activo</span>
+                        </div>
+                      )}
                     </div>
                     
-                    <div className="flex items-center ml-4">
-                      <div className="w-5 h-5 bg-white rounded-full mr-2 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-[#009ADE]"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      </div>
-                      <span className="whitespace-nowrap">PAC/PAT Activo</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <CustomCheckbox 
-                      id={`quota-0`}
-                      checked={selectedQuotas.includes(0)}
-                      onChange={() => handleQuotaSelection(0)}
-                    />
-                    
-                    <div className="grid grid-cols-4 gap-6 w-full">
-                      <div>
-                        <div className="text-xs text-gray-500">Cuota N°6</div>
-                        <div className="text-sm">Vence en 4 días</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500">Cuota</div>
-                        <div className="font-medium">$1.358.270</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500">Interés Mora</div>
-                        <div className="font-medium">$0</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500">Total Cuota</div>
-                        <div className="font-medium">$1.358.270</div>
+                    <div className="flex items-center">
+                      <CustomCheckbox 
+                        id={`quota-${index}`}
+                        checked={selectedQuotas.includes(index)}
+                        onChange={() => handleQuotaSelection(index)}
+                      />
+                      
+                      <div className="grid grid-cols-4 gap-6 w-full">
+                        <div>
+                          <div className="text-xs text-gray-500">Cuota N°{quota.quotaNumber}</div>
+                          <div className="text-sm">Vence en {quota.daysUntilDue} {quota.daysUntilDue === 1 ? 'día' : 'días'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500">Cuota</div>
+                          <div className="font-medium">{quota.quotaAmount}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500">Interés Mora</div>
+                          <div className="font-medium">{quota.interestAmount}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500">Total Cuota</div>
+                          <div className="font-medium">{quota.totalAmount}</div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                ))}
                 
-                {/* Cuota 2 */}
-                <div>
-                  <div className="bg-[#009ADE] text-white p-4 rounded-t-lg flex justify-between items-center mb-4">
-                    <div className="grid grid-cols-3 gap-6 w-full">
-                      <div>
-                        <div className="text-xs opacity-80">Contrato</div>
-                        <div className="font-medium">{quotas[1].contractNumber}</div>
+                {/* Mensaje de advertencia, si existe */}
+                {userData.warningMessage && (
+                  <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mt-6">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
                       </div>
-                      <div>
-                        <div className="text-xs opacity-80">Patente</div>
-                        <div className="font-medium">{quotas[1].licensePlate}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs opacity-80">Vehículo</div>
-                        <div className="font-medium">{quotas[1].vehicleType}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center ml-4">
-                      <div className="w-5 h-5 bg-white rounded-full mr-2 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-[#009ADE]"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      </div>
-                      <span className="whitespace-nowrap">PAC/PAT Activo</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <CustomCheckbox 
-                      id={`quota-1`}
-                      checked={selectedQuotas.includes(1)}
-                      onChange={() => handleQuotaSelection(1)}
-                    />
-                    
-                    <div className="grid grid-cols-4 gap-6 w-full">
-                      <div>
-                        <div className="text-xs text-gray-500">Cuota N°2</div>
-                        <div className="text-sm">Vence en 1 día</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500">Cuota</div>
-                        <div className="font-medium">$917.539</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500">Interés Mora</div>
-                        <div className="font-medium">$0</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500">Total Cuota</div>
-                        <div className="font-medium">$917.539</div>
+                      <div className="ml-3">
+                        <p className="text-sm text-yellow-700 whitespace-pre-line">
+                          {userData.warningMessage}
+                        </p>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
             

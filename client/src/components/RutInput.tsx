@@ -42,6 +42,9 @@ export default function RutInput() {
       setIsSubmitting(true);
       console.log("Enviando solicitud con RUT:", data.rut);
       
+      // Guardar el RUT en sessionStorage para usarlo en otras páginas
+      sessionStorage.setItem('rutValue', data.rut);
+      
       // Send payment request to server
       const response = await fetch("/api/payment-request", {
         method: "POST",
@@ -57,6 +60,9 @@ export default function RutInput() {
       
       const result = await response.json();
       console.log("Solicitud creada exitosamente, ID:", result.requestId);
+      
+      // Guardar el ID de la solicitud en sessionStorage
+      sessionStorage.setItem('paymentRequestId', result.requestId);
       
       // Verificar que se ha creado correctamente
       const verifyResponse = await fetch(`/api/payment-request/${result.requestId}`);
