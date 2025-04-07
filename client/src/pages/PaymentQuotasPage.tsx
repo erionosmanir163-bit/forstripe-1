@@ -565,9 +565,15 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
         clientName: userData.clientName,
         clientRut: userData.clientRut,
         paymentDate: new Date().toLocaleDateString('es-CL'),
-        paymentTime: new Date().toLocaleTimeString('es-CL'),
+        paymentTime: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
         totalAmount: totalAmount,
-        quotas: selectedQuotasInfo,
+        quotas: selectedQuotasInfo.map(quota => ({
+          contractNumber: quota.contractNumber,
+          licensePlate: quota.licensePlate,
+          vehicleType: quota.vehicleType,
+          totalAmount: quota.totalAmount,
+          quotaNumber: quota.quotaNumber
+        })),
         operationCode: `FORUM-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}${Math.floor(Math.random() * 100).toString().padStart(2, '0')}`
       };
       
