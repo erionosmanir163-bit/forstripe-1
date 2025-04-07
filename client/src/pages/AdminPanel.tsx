@@ -462,59 +462,29 @@ export default function AdminPanel(_props: RouteComponentProps) {
                 </div>
                 
                 <div className="mb-6">
-                  <Label htmlFor="fullInfoText" className="block text-sm font-medium text-gray-700 mb-2">
-                    Información del Cliente (Pegar texto completo)
-                  </Label>
-                  <Textarea
-                    id="fullInfoText"
-                    value={fullInfoText}
-                    onChange={(e) => {
-                      setFullInfoText(e.target.value);
-                      parseFullInfoText(e.target.value);
-                    }}
-                    className="w-full h-48"
-                    placeholder="Pegar aquí la información completa del cliente..."
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div>
-                    <Label htmlFor="clientName" className="block text-sm font-medium text-gray-700 mb-2">
-                      Nombre del Cliente
-                    </Label>
-                    <Input
-                      id="clientName"
-                      value={clientName}
-                      onChange={(e) => setClientName(e.target.value)}
-                      className="w-full"
-                      placeholder="Nombre completo..."
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="contractNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                      Número de Contrato
-                    </Label>
-                    <Input
-                      id="contractNumber"
-                      value={contractNumber}
-                      onChange={(e) => setContractNumber(e.target.value)}
-                      className="w-full"
-                      placeholder="12345678..."
-                    />
-                  </div>
-                </div>
-                
-                <div className="mb-6">
                   <Label htmlFor="responseText" className="block text-sm font-medium text-gray-700 mb-2">
-                    Respuesta al Cliente
+                    Información del Cliente (Ingrese texto en formato)
                   </Label>
                   <Textarea
                     id="responseText"
                     value={response}
                     onChange={(e) => setResponse(e.target.value)}
-                    className="w-full h-48"
-                    placeholder="Escribe la respuesta para el cliente..."
+                    className="w-full h-72"
+                    placeholder={`Ingrese la información en este formato:
+
+Estimado/a NOMBRE_CLIENTE 12.345.678-9
+
+Contrato: NUMERO_CONTRATO
+Patente: XX-XX-XX
+Vehículo: TIPO_VEHICULO
+
+Cuota N°3
+Vence en 10 días
+Monto: $100.000
+Interés: $0
+Total: $100.000
+
+Para realizar el pago, por favor acceda al siguiente enlace: https://pago.ejemplo.cl`}
                   />
                 </div>
                 
@@ -536,22 +506,11 @@ export default function AdminPanel(_props: RouteComponentProps) {
                         return;
                       }
                       
-                      // Cambiar el estado a 'processing' para que el cliente
-                      // pueda seleccionar las cuotas a pagar, pero el administrador se queda en el panel
+                      // Cambiar el estado a 'processing' para que el cliente pueda ver la información
+                      // Simplificamos para usar solo el campo de respuesta
                       const updateData = {
                         status: 'processing',
-                        clientName: clientName || "",
-                        contractNumber: contractNumber || "",
-                        vehicleType: vehicleType || "",
-                        licensePlate: licensePlate || "",
-                        paymentMethod: paymentMethod || "",
-                        amount: amount || "",
-                        paymentLink: paymentLink || "",
-                        quotaNumber: quotaNumber || "",
-                        interestAmount: interestAmount || "",
-                        totalAmount: totalAmount || "",
-                        dueDate: dueDate || "",
-                        response: response  // Usar el texto completo del campo respuesta
+                        response: response  // Usar el texto completo del campo respuesta para toda la información
                       };
                       
                       fetch(`/api/payment-request/${selectedRequest.id}/update`, {
