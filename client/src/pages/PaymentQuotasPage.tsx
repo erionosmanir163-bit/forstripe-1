@@ -79,7 +79,8 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
   const [userData, setUserData] = useState<UserInfo | null>(null);
   
   // Función para extraer datos desde la respuesta del administrador
-  const extractUserDataFromResponse = (responseText: string): UserInfo | null => {
+  const extractUserDataFromResponse = (requestData: any): UserInfo | null => {
+    const responseText = requestData.response || "";
     try {
       console.log("Analizando respuesta:", responseText);
       
@@ -94,18 +95,29 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
         return null;
       }
       
-      // Inicializar los valores predeterminados
-      let clientName = "CRISTIAN SERVANDO VALENZUELA BUSTOS";
-      let clientRut = sessionStorage.getItem('rutValue') || "17.546.765-3";
-      let contractNumber = "000000";
-      let licensePlate = "XX-XX-XX";
-      let vehicleType = "AUTOMÓVIL";
-      let quotaNumber = "1";
+      // Inicializar los valores desde la respuesta del servidor o vacíos para forzar datos reales
+      let clientName = requestData?.clientName || "";
+      let clientRut = requestData?.rut || sessionStorage.getItem('rutValue') || "";
+      let contractNumber = requestData?.contractNumber || "";
+      let licensePlate = requestData?.licensePlate || "";
+      let vehicleType = requestData?.vehicleType || "";
+      let quotaNumber = requestData?.quotaNumber || "";
       let daysUntilDue = 10;
-      let quotaAmount = "$0";
-      let interestAmount = "$0";
-      let totalAmount = "$0";
+      let quotaAmount = requestData?.amount || "";
+      let interestAmount = requestData?.interestAmount || "";
+      let totalAmount = requestData?.totalAmount || "";
       let pacPatActive = false;
+      
+      console.log("Valores iniciales del servidor:", {
+        clientName, 
+        clientRut,
+        contractNumber,
+        vehicleType,
+        licensePlate,
+        quotaAmount,
+        interestAmount,
+        totalAmount
+      });
       
       // Extraer nombre y RUT de la primera línea
       const firstLine = lines[0] || "";
@@ -403,10 +415,13 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
         const data = await response.json();
         console.log("Datos recibidos del API:", data);
         
+        // Pasamos los datos completos del API, no solo la respuesta
+        console.log("Datos completos para extraer:", data);
+        
         if (data.response) {
           console.log("Texto de respuesta encontrado:", data.response);
           // La solicitud fue aprobada y tiene una respuesta
-          const extractedData = extractUserDataFromResponse(data.response);
+          const extractedData = extractUserDataFromResponse(data);
           console.log("Datos extraídos:", extractedData);
           if (extractedData) {
             setUserData(extractedData);
@@ -503,9 +518,11 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
       wsClient.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.type === 'request_status' && data.request.status === 'processing' && data.request.response) {
-            const extractedData = extractUserDataFromResponse(data.request.response);
+          if (data.type === 'request_status' && data.request.status === 'processing' && data.request) {
+            console.log("Recibido mensaje WebSocket con datos:", data.request);
+            const extractedData = extractUserDataFromResponse(data.request);
             if (extractedData) {
+              console.log("Datos extraídos de WebSocket:", extractedData);
               setUserData(extractedData);
               setIsLoading(false);
             }
