@@ -54,8 +54,6 @@ export default function AdminPanel(_props: RouteComponentProps) {
   const [totalAmount, setTotalAmount] = useState('');
   const [dueDate, setDueDate] = useState('');
   
-  // Este estado ya se ha definido arriba
-  
   // Cargar solicitudes desde la API REST
   const fetchRequests = async () => {
     try {
@@ -470,9 +468,11 @@ export default function AdminPanel(_props: RouteComponentProps) {
                     value={response}
                     onChange={(e) => setResponse(e.target.value)}
                     className="w-full h-72"
-                    placeholder={`Estimado/a CRISTIAN SERVANDO VALENZUELA BUSTOS 17.546.765-3
-
+                    placeholder={`DANIEL GASTELBONDO JUNIOR
+17.546.764-3
 Cuotas a pagar
+Método de pago
+Comprobante de pago
 Contrato
 744530
 PAC/PAT Activo
