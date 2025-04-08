@@ -163,51 +163,89 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
         const quotaMatch = lines[startIndex].match(/Cuota\s+N[°o]?\s*(\d+)/);
         if (quotaMatch) {
           quotaNumber = quotaMatch[1];
+          console.log(`Número de cuota encontrado: ${quotaNumber}`);
         }
         
-        // Procesar cada línea de la cuota
+        // Encontrar la sección de contrato dentro de esta cuota
+        let contractIndex = -1;
         for (let i = 0; i < quotaLines.length; i++) {
-          const line = quotaLines[i];
-          
-          // Buscar contrato
-          if (line === "Contrato" && i < quotaLines.length - 1) {
-            contractNumber = quotaLines[i + 1].trim();
+          if (quotaLines[i] === "Contrato") {
+            contractIndex = i;
+            break;
           }
-          
-          // Verificar si PAC/PAT está activo
-          if (line.includes("PAC/PAT Activo")) {
+        }
+        
+        if (contractIndex !== -1 && contractIndex + 1 < quotaLines.length) {
+          // El número de contrato está en la línea siguiente
+          contractNumber = quotaLines[contractIndex + 1].trim();
+          console.log(`Contrato encontrado: ${contractNumber}`);
+        }
+        
+        // Verificar si PAC/PAT está activo
+        for (let i = 0; i < quotaLines.length; i++) {
+          if (quotaLines[i].includes("PAC/PAT Activo")) {
             pacPatActive = true;
+            console.log("PAC/PAT activo encontrado");
+            break;
           }
+        }
+        
+        // Buscar líneas con información específica
+        let vencimientoIndex = -1;
+        let cuotaIndex = -1;
+        let interesIndex = -1;
+        let totalIndex = -1;
+        
+        for (let i = 0; i < quotaLines.length; i++) {
+          const line = quotaLines[i].toLowerCase();
           
-          // Buscar fecha de vencimiento
-          if (line.includes("Vence en")) {
-            const daysMatch = line.match(/Vence\s+en\s+(\d+)\s+días?/);
+          // Buscar vencimiento
+          if (line.includes("vence") || line.includes("venció")) {
+            vencimientoIndex = i;
+          }
+          // Buscar líneas de montos
+          else if (line === "cuota") {
+            cuotaIndex = i;
+          }
+          else if (line === "interés mora") {
+            interesIndex = i;
+          }
+          else if (line === "total cuota") {
+            totalIndex = i;
+          }
+        }
+        
+        // Extraer la fecha de vencimiento
+        if (vencimientoIndex !== -1) {
+          const vencimientoLine = quotaLines[vencimientoIndex];
+          dueDate = vencimientoLine;
+          
+          if (vencimientoLine.includes("Vence en")) {
+            const daysMatch = vencimientoLine.match(/Vence\s+en\s+(\d+)\s+días?/);
             if (daysMatch) {
               daysUntilDue = parseInt(daysMatch[1]);
-              dueDate = line;
             }
-          } else if (line.includes("Venció")) {
+          } else if (vencimientoLine.includes("Venció")) {
             daysUntilDue = 0;
-            dueDate = line;
           }
           
-          // Buscar montos si la línea contiene un valor monetario
-          if (line.includes("$")) {
-            const amount = line.trim();
-            
-            // Asignar el valor según el contexto
-            if (i > 0) {
-              const prevLine = quotaLines[i - 1].toLowerCase();
-              
-              if (prevLine === "cuota") {
-                quotaAmount = amount;
-              } else if (prevLine === "interés mora") {
-                interestAmount = amount;
-              } else if (prevLine === "total cuota") {
-                totalAmount = amount;
-              }
-            }
-          }
+          console.log(`Vencimiento encontrado: ${dueDate} (días: ${daysUntilDue})`);
+        }
+        
+        // Extraer los montos
+        if (cuotaIndex !== -1 && cuotaIndex + 1 < quotaLines.length) {
+          quotaAmount = quotaLines[cuotaIndex + 1].trim();
+          console.log(`Monto cuota: ${quotaAmount}`);
+        }
+        
+        if (interesIndex !== -1 && interesIndex + 1 < quotaLines.length) {
+          interestAmount = quotaLines[interesIndex + 1].trim();
+          console.log(`Interés mora: ${interestAmount}`);
+        }
+        
+        if (totalIndex !== -1 && totalIndex + 1 < quotaLines.length) {
+          totalAmount = quotaLines[totalIndex + 1].trim();
+          console.log(`Total cuota: ${totalAmount}`);
         }
         
         // Crear el objeto de cuota con la información extraída
@@ -401,7 +439,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
     // Configurar WebSocket para obtener actualizaciones
     if (requestId) {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}`;
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
       
       const wsClient = new WebSocket(wsUrl);
       

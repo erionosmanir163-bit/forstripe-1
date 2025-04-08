@@ -141,7 +141,7 @@ export default function LoadingPage(_props: RouteComponentProps) {
   
   // Connect to WebSocket for real-time updates
   const { status: wsStatus, lastMessage, sendJsonMessage } = useWebSocket({
-    url: `/ws?type=user&requestId=${requestId}&provider=${paymentProvider}`,
+    url: `/ws`,
     onOpen: () => {
       console.log('WebSocket connection opened, sending request registration for request ID:', requestId);
       // Send a message to register this client with the specific requestId
