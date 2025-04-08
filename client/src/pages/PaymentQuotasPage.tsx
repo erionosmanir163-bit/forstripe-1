@@ -87,7 +87,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
       if (!responseText) return null;
       
       // Separar el texto en líneas para facilitar el procesamiento
-      const lines = responseText.split(/\r?\n/).map((line: string) => line.trim());
+      const lines = responseText.split(/\r?\n/).map((line: string) => line.trim()).filter((line: string) => line !== "");
       console.log("Líneas totales:", lines.length);
       
       if (lines.length < 2) {
@@ -98,12 +98,13 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
       // Inicializar datos del cliente
       // Primera línea es siempre el nombre
       let clientName = lines[0].trim();
-      // Segunda línea es siempre el RUT
+      // Segunda línea es siempre el RUT - preservar exactamente como está en el input
       let clientRut = lines[1].trim();
       
       // Actualizar nombre y RUT desde el servidor si están disponibles
-      if (requestData.clientName) clientName = requestData.clientName;
-      if (requestData.rut) clientRut = requestData.rut;
+      // Solo si no se puede extraer del texto de respuesta
+      if (!clientName && requestData.clientName) clientName = requestData.clientName;
+      if (!clientRut && requestData.rut) clientRut = requestData.rut;
       
       console.log("Datos del cliente extraídos:", { clientName, clientRut });
       
@@ -166,8 +167,10 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
           console.log(`Número de cuota encontrado: ${quotaNumber}`);
         }
         
-        // Encontrar la sección de contrato dentro de esta cuota
+        // Encontrar la sección de contrato dentro de esta cuota o en el texto completo
         let contractIndex = -1;
+        
+        // Primero buscar en las líneas de esta cuota
         for (let i = 0; i < quotaLines.length; i++) {
           if (quotaLines[i] === "Contrato") {
             contractIndex = i;
@@ -175,10 +178,23 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
           }
         }
         
-        if (contractIndex !== -1 && contractIndex + 1 < quotaLines.length) {
-          // El número de contrato está en la línea siguiente
+        // Si no se encuentra dentro de esta cuota, buscar en todo el texto
+        if (contractIndex === -1) {
+          // Buscar contratos en todas las líneas
+          for (let i = 0; i < lines.length; i++) {
+            if (lines[i] === "Contrato" && i + 1 < lines.length) {
+              // Encontrar el contrato más cercano antes de la cuota actual
+              if (i < startIndex) {
+                contractNumber = lines[i + 1].trim();
+                console.log(`Contrato encontrado en líneas globales: ${contractNumber}`);
+                break;
+              }
+            }
+          }
+        } else if (contractIndex !== -1 && contractIndex + 1 < quotaLines.length) {
+          // El número de contrato está en la línea siguiente dentro de la cuota
           contractNumber = quotaLines[contractIndex + 1].trim();
-          console.log(`Contrato encontrado: ${contractNumber}`);
+          console.log(`Contrato encontrado dentro de la cuota: ${contractNumber}`);
         }
         
         // Verificar si PAC/PAT está activo
@@ -306,14 +322,39 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
                          responseText.includes("PAC o PAT") ||
                          responseText.includes("suscribir el pago");
       
-      // Extraer información de advertencia
+      // Extraer información de advertencia y mensajes adicionales
       let warningMessage: string | undefined = undefined;
+      
+      // Buscar mensajes especiales o notas adicionales
+      const specialMessages: string[] = [];
+      
+      lines.forEach((line: string) => {
+        if (line.includes("Mensaje especial:") || 
+            line.includes("Otro mensaje:") || 
+            line.includes("Nota:")) {
+          specialMessages.push(line);
+        }
+      });
+      
       if (responseText.includes("El pago vía PAC/PAT puede tardar")) {
         const warningRegex = /(El pago vía PAC\/PAT puede tardar[^]*?\*\*[^]*?señalado)/;
         const warningMatch = responseText.match(warningRegex);
-        warningMessage = warningMatch ? warningMatch[1] : undefined;
-        console.log("Mensaje de advertencia extraído:", warningMessage);
+        const pacPatWarning = warningMatch ? warningMatch[1] : undefined;
+        
+        if (pacPatWarning) {
+          if (specialMessages.length > 0) {
+            // Combinar advertencia PAC/PAT con mensajes especiales
+            warningMessage = `${pacPatWarning}\n\n${specialMessages.join("\n")}`;
+          } else {
+            warningMessage = pacPatWarning;
+          }
+        }
+      } else if (specialMessages.length > 0) {
+        // Si no hay advertencia PAC/PAT pero hay mensajes especiales
+        warningMessage = specialMessages.join("\n");
       }
+      
+      console.log("Mensaje(s) de advertencia extraído(s):", warningMessage);
       
       return {
         clientName,

@@ -34,6 +34,7 @@ export default function AdminPanel(_props: RouteComponentProps) {
   const [requests, setRequests] = useState<PaymentRequest[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<PaymentRequest | null>(null);
   const [response, setResponse] = useState('');
+  const [fullInfoText, setFullInfoText] = useState('');
   
   // Campos cliente
   const [clientName, setClientName] = useState('');
@@ -53,8 +54,7 @@ export default function AdminPanel(_props: RouteComponentProps) {
   const [totalAmount, setTotalAmount] = useState('');
   const [dueDate, setDueDate] = useState('');
   
-  // Campo para la información de texto completo
-  const [fullInfoText, setFullInfoText] = useState('');
+  // Este estado ya se ha definido arriba
   
   // Cargar solicitudes desde la API REST
   const fetchRequests = async () => {
