@@ -226,6 +226,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
               daysUntilDue = parseInt(daysMatch[1]);
             }
           } else if (vencimientoLine.includes("Venció")) {
+            // Si la cuota venció, mostrar el texto exacto y no "Vence en 0 días"
             daysUntilDue = 0;
           }
           
@@ -478,8 +479,30 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
     
     selectedQuotas.forEach(index => {
       const quota = userData.quotas[index];
-      // Convertir el string con formato de dinero a un número
-      const amount = parseFloat(quota.totalAmount.replace(/[$,.]/g, ''));
+      // Convertir el string con formato de dinero a un número (formato chileno con punto como separador de miles)
+      const amount = parseFloat(quota.totalAmount.replace(/[$.,]/g, '').replace(/,/g, '.'));
+      total += amount;
+    });
+    
+    // Formatear el total como moneda chilena
+    return new Intl.NumberFormat('es-CL', { 
+      style: 'currency', 
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(total);
+  };
+  
+  // Calcular el total de interés mora
+  const getTotalInteres = () => {
+    if (!userData || selectedQuotas.length === 0) return "$0";
+    
+    let total = 0;
+    
+    selectedQuotas.forEach(index => {
+      const quota = userData.quotas[index];
+      // Convertir el string con formato de dinero a un número (formato chileno)
+      const amount = parseFloat(quota.interestAmount.replace(/[$.,]/g, '').replace(/,/g, '.'));
       total += amount;
     });
     
@@ -514,7 +537,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
     if (userData) {
       const selectedQuotasInfo = selectedQuotas.map(index => userData.quotas[index]);
       const totalAmount = selectedQuotasInfo.reduce((sum, quota) => {
-        const amount = parseFloat(quota.totalAmount.replace(/[$,.]/g, ''));
+        const amount = parseFloat(quota.totalAmount.replace(/[$.,]/g, '').replace(/,/g, '.'));
         return sum + amount;
       }, 0);
       
@@ -671,7 +694,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
                           <div className="w-5 h-5 bg-white rounded-full mr-2 flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-[#009ADE]"><polyline points="20 6 9 17 4 12"></polyline></svg>
                           </div>
-                          <span className="whitespace-nowrap">PAC/PAT Activo</span>
+                          <span className="whitespace-nowrap font-medium">PAC/PAT Activo</span>
                         </div>
                       )}
                     </div>
@@ -686,7 +709,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
                       <div className="grid grid-cols-4 gap-6 w-full">
                         <div>
                           <div className="text-xs text-gray-500">Cuota N°{quota.quotaNumber}</div>
-                          <div className="text-sm">Vence en {quota.daysUntilDue} {quota.daysUntilDue === 1 ? 'día' : 'días'}</div>
+                          <div className="text-sm">{quota.dueDate || `Vence en ${quota.daysUntilDue} ${quota.daysUntilDue === 1 ? 'día' : 'días'}`}</div>
                         </div>
                         <div>
                           <div className="text-xs text-gray-500">Cuota</div>
@@ -744,7 +767,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
                       <span>Total Interés Mora</span>
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 text-blue-300"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                     </div>
-                    <span className="font-medium">$0</span>
+                    <span className="font-medium">{selectedQuotas.length ? getTotalInteres() : "$0"}</span>
                   </div>
                   
                   <div className="flex justify-between items-center">
