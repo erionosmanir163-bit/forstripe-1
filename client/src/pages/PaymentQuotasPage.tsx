@@ -87,286 +87,166 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
       if (!responseText) return null;
       
       // Separar el texto en líneas para facilitar el procesamiento
-      const lines = responseText.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
-      console.log("Líneas:", lines);
+      const lines = responseText.split(/\r?\n/).map((line: string) => line.trim());
+      console.log("Líneas totales:", lines.length);
       
-      if (lines.length === 0) {
-        console.log("No hay líneas para procesar en la respuesta");
+      if (lines.length < 2) {
+        console.log("No hay suficientes líneas para procesar en la respuesta");
         return null;
       }
       
-      // Inicializar los valores desde la respuesta del servidor o vacíos para forzar datos reales
-      let clientName = requestData?.clientName || "";
-      let clientRut = requestData?.rut || sessionStorage.getItem('rutValue') || "";
-      let contractNumber = requestData?.contractNumber || "";
-      let licensePlate = requestData?.licensePlate || "";
-      let vehicleType = requestData?.vehicleType || "";
-      let quotaNumber = requestData?.quotaNumber || "";
-      let daysUntilDue = 10;
-      let quotaAmount = requestData?.amount || "";
-      let interestAmount = requestData?.interestAmount || "";
-      let totalAmount = requestData?.totalAmount || "";
-      let pacPatActive = false;
+      // Inicializar datos del cliente
+      // Primera línea es siempre el nombre
+      let clientName = lines[0].trim();
+      // Segunda línea es siempre el RUT
+      let clientRut = lines[1].trim();
       
-      console.log("Valores iniciales del servidor:", {
-        clientName, 
-        clientRut,
-        contractNumber,
-        vehicleType,
-        licensePlate,
-        quotaAmount,
-        interestAmount,
-        totalAmount
+      // Actualizar nombre y RUT desde el servidor si están disponibles
+      if (requestData.clientName) clientName = requestData.clientName;
+      if (requestData.rut) clientRut = requestData.rut;
+      
+      console.log("Datos del cliente extraídos:", { clientName, clientRut });
+      
+      // Guardar en sessionStorage para uso posterior
+      sessionStorage.setItem('clientName', clientName);
+      sessionStorage.setItem('rutValue', clientRut);
+      
+      // Encontrar todas las cuotas en el texto
+      const quotas: QuotaInfo[] = [];
+      
+      // Buscar índices de inicio de cada cuota (líneas que comienzan con "Cuota N°")
+      const quotaStartIndices: number[] = [];
+      lines.forEach((line: string, index: number) => {
+        if (line.match(/^Cuota\s+N[°o]?\s*\d+$/)) {
+          quotaStartIndices.push(index);
+        }
       });
       
-      // Extraer nombre y RUT de la primera línea
-      const firstLine = lines[0] || "";
-      const nameRutMatch = firstLine.match(/Estimado\/a\s+([A-ZÁÉÍÓÚÑ\s]+)\s+(\d{1,2}\.\d{3}\.\d{3}-[0-9kK])/);
+      console.log("Índices de inicio de cuotas:", quotaStartIndices);
       
-      if (nameRutMatch) {
-        clientName = nameRutMatch[1].trim();
-        clientRut = nameRutMatch[2].trim();
-        console.log("Nombre extraído:", clientName);
-        console.log("RUT extraído:", clientRut);
-        
-        // Guardar en sessionStorage para uso posterior
-        sessionStorage.setItem('clientName', clientName);
-        sessionStorage.setItem('rutValue', clientRut);
-      } else {
-        // Buscar RUT en cualquier línea
-        for (const line of lines) {
-          const rutMatch = line.match(/(\d{1,2}\.\d{3}\.\d{3}-[0-9kK])/);
-          if (rutMatch) {
-            clientRut = rutMatch[1];
-            console.log("RUT extraído (alt):", clientRut);
-            // Guardar el RUT en sessionStorage
-            sessionStorage.setItem('rutValue', clientRut);
-            break;
+      // Si no hay cuotas identificadas, buscamos por patrones alternativos
+      if (quotaStartIndices.length === 0) {
+        const altIndices: number[] = [];
+        lines.forEach((line: string, index: number) => {
+          if (line.includes("Cuota N°")) {
+            altIndices.push(index);
           }
-        }
-        
-        // Intentar extraer el nombre si hay una línea que empieza con "Estimado/a" o similar
-        for (const line of lines) {
-          if (line.includes("Estimado/a") || line.includes("Estimado") || line.includes("Cliente:")) {
-            const nameMatch = line.match(/(?:Estimado\/a|Estimado|Cliente:)\s+([A-ZÁÉÍÓÚÑ\s]+)/i);
-            if (nameMatch && nameMatch[1]) {
-              clientName = nameMatch[1].trim();
-              console.log("Nombre extraído (alt):", clientName);
-              // Guardar el nombre en sessionStorage
-              sessionStorage.setItem('clientName', clientName);
-              break;
-            }
-          }
+        });
+        if (altIndices.length > 0) {
+          console.log("Índices alternativos de cuotas:", altIndices);
+          quotaStartIndices.push(...altIndices);
         }
       }
       
-      // Buscar información de contrato y vehículo en cada línea
-      for (const line of lines) {
-        // Buscar contrato con varios formatos posibles
-        if (line.includes("Contrato:") || line.includes("Contrato")) {
-          const match = line.match(/Contrato:?\s*([A-Z0-9]+)/);
-          if (match) {
-            contractNumber = match[1].trim();
-            console.log("Contrato encontrado:", contractNumber);
-          } else if (line.trim() === "Contrato" && lines.length > lines.indexOf(line) + 1) {
-            // Si la línea solo dice "Contrato", el número podría estar en la siguiente línea
-            const nextLine = lines[lines.indexOf(line) + 1];
-            if (nextLine && !nextLine.includes(":")) {
-              contractNumber = nextLine.trim();
-              console.log("Contrato encontrado (siguiente línea):", contractNumber);
-            }
-          }
+      // Procesar cada cuota encontrada
+      quotaStartIndices.forEach((startIndex: number, idx: number) => {
+        // Determinar el rango de líneas para esta cuota
+        const endIndex = idx < quotaStartIndices.length - 1 
+          ? quotaStartIndices[idx + 1] 
+          : lines.length;
+          
+        const quotaLines = lines.slice(startIndex, endIndex);
+        console.log(`Procesando cuota ${idx + 1}:`, quotaLines);
+        
+        let quotaNumber = "";
+        let contractNumber = "000000";
+        let licensePlate = "XX-XX-XX";
+        let vehicleType = "AUTOMÓVIL";
+        let pacPatActive = false;
+        let daysUntilDue = 10;
+        let dueDate: string | undefined;
+        let quotaAmount = "$0";
+        let interestAmount = "$0";
+        let totalAmount = "$0";
+        
+        // Extraer número de cuota de la línea de inicio
+        const quotaMatch = lines[startIndex].match(/Cuota\s+N[°o]?\s*(\d+)/);
+        if (quotaMatch) {
+          quotaNumber = quotaMatch[1];
         }
         
-        // Buscar patente con varios formatos posibles
-        if (line.includes("Patente:") || line.includes("Patente")) {
-          const match = line.match(/Patente:?\s*([A-Z0-9•-]+)/);
-          if (match) {
-            licensePlate = match[1].trim();
-            console.log("Patente encontrada:", licensePlate);
-          } else if (line.trim() === "Patente" && lines.length > lines.indexOf(line) + 1) {
-            // Si la línea solo dice "Patente", la patente podría estar en la siguiente línea
-            const nextLine = lines[lines.indexOf(line) + 1];
-            if (nextLine && !nextLine.includes(":")) {
-              licensePlate = nextLine.trim();
-              console.log("Patente encontrada (siguiente línea):", licensePlate);
-            }
-          }
-        }
-        
-        // Buscar vehículo con varios formatos posibles
-        if (line.includes("Vehículo:") || line.includes("Vehículo")) {
-          const match = line.match(/Vehículo:?\s*(.+)/);
-          if (match) {
-            vehicleType = match[1].trim();
-            console.log("Vehículo encontrado:", vehicleType);
-          } else if (line.trim() === "Vehículo" && lines.length > lines.indexOf(line) + 1) {
-            // Si la línea solo dice "Vehículo", el tipo podría estar en la siguiente línea
-            const nextLine = lines[lines.indexOf(line) + 1];
-            if (nextLine && !nextLine.includes(":")) {
-              vehicleType = nextLine.trim();
-              console.log("Vehículo encontrado (siguiente línea):", vehicleType);
-            }
-          }
-        }
-        
-        // Buscar número de cuota
-        if (line.includes("Cuota N°") || line.match(/Cuota\s+N[°o]?\s*\d+/)) {
-          const match = line.match(/Cuota\s+N[°o]?\s*(\d+)/);
-          if (match) {
-            quotaNumber = match[1];
-            console.log("Número de cuota:", quotaNumber);
-          }
-        }
-        
-        // Buscar días hasta vencimiento
-        if (line.includes("Vence en") || line.includes("Vence")) {
-          const match = line.match(/Vence\s+en\s+(\d+)\s+días?/);
-          if (match) {
-            daysUntilDue = parseInt(match[1]);
-            console.log("Días hasta vencimiento:", daysUntilDue);
-          }
-        }
-        
-        // Buscar importes monetarios de cuota, interés y total
-        if (line.includes("$")) {
-          // Buscar monto de cuota
-          if (line.toLowerCase().includes("monto") || line.toLowerCase().includes("cuota")) {
-            const match = line.match(/\$\s*([0-9.,]+)/);
-            if (match) {
-              quotaAmount = "$" + match[1];
-              console.log("Monto de cuota:", quotaAmount);
-            }
+        // Procesar cada línea de la cuota
+        for (let i = 0; i < quotaLines.length; i++) {
+          const line = quotaLines[i];
+          
+          // Buscar contrato
+          if (line === "Contrato" && i < quotaLines.length - 1) {
+            contractNumber = quotaLines[i + 1].trim();
           }
           
-          // Buscar interés
-          else if (line.toLowerCase().includes("interés")) {
-            const match = line.match(/\$\s*([0-9.,]+)/);
-            if (match) {
-              interestAmount = "$" + match[1];
-              console.log("Interés:", interestAmount);
-            }
+          // Verificar si PAC/PAT está activo
+          if (line.includes("PAC/PAT Activo")) {
+            pacPatActive = true;
           }
           
-          // Buscar total
-          else if (line.toLowerCase().includes("total")) {
-            const match = line.match(/\$\s*([0-9.,]+)/);
-            if (match) {
-              totalAmount = "$" + match[1];
-              console.log("Total:", totalAmount);
+          // Buscar fecha de vencimiento
+          if (line.includes("Vence en")) {
+            const daysMatch = line.match(/Vence\s+en\s+(\d+)\s+días?/);
+            if (daysMatch) {
+              daysUntilDue = parseInt(daysMatch[1]);
+              dueDate = line;
             }
+          } else if (line.includes("Venció")) {
+            daysUntilDue = 0;
+            dueDate = line;
           }
           
-          // Intentar adivinar el tipo de importe por su posición después de etiquetas
-          else {
-            const lineIdx = lines.indexOf(line);
-            if (lineIdx > 0) {
-              const prevLine = lines[lineIdx - 1].toLowerCase();
-              if (prevLine.includes("cuota") && !prevLine.includes("total")) {
-                const match = line.match(/\$\s*([0-9.,]+)/);
-                if (match) {
-                  quotaAmount = "$" + match[1];
-                  console.log("Monto de cuota (inferido):", quotaAmount);
-                }
-              } else if (prevLine.includes("interés")) {
-                const match = line.match(/\$\s*([0-9.,]+)/);
-                if (match) {
-                  interestAmount = "$" + match[1];
-                  console.log("Interés (inferido):", interestAmount);
-                }
-              } else if (prevLine.includes("total")) {
-                const match = line.match(/\$\s*([0-9.,]+)/);
-                if (match) {
-                  totalAmount = "$" + match[1];
-                  console.log("Total (inferido):", totalAmount);
-                }
+          // Buscar montos si la línea contiene un valor monetario
+          if (line.includes("$")) {
+            const amount = line.trim();
+            
+            // Asignar el valor según el contexto
+            if (i > 0) {
+              const prevLine = quotaLines[i - 1].toLowerCase();
+              
+              if (prevLine === "cuota") {
+                quotaAmount = amount;
+              } else if (prevLine === "interés mora") {
+                interestAmount = amount;
+              } else if (prevLine === "total cuota") {
+                totalAmount = amount;
               }
             }
           }
         }
-      }
-      
-      // Determinar si debe mostrar suscripción PAC/PAT
-      const showPacPat = responseText.includes("Suscripción automática a PAC o PAT") || 
-                          responseText.includes("PAC o PAT") ||
-                          responseText.includes("suscribir el pago");
-      
-      console.log("Mostrar PAC/PAT:", showPacPat);
-      
-      // Extraer información de advertencia si existe
-      let warningMessage: string | undefined = undefined;
-      if (responseText.includes("El pago vía PAC/PAT puede tardar")) {
-        const warningRegex = /(El pago vía PAC\/PAT puede tardar[^]*?\*\*[^]*?señalado)/;
-        const warningMatch = responseText.match(warningRegex);
-        warningMessage = warningMatch ? warningMatch[1] : undefined;
-        console.log("Mensaje de advertencia extraído:", warningMessage);
-      }
-      
-      // Crear la cuota con la información extraída
-      const quotas: QuotaInfo[] = [{
-        contractNumber,
-        licensePlate,
-        vehicleType,
-        pacPatActive,
-        quotaNumber,
-        quotaAmount,
-        interestAmount,
-        totalAmount,
-        daysUntilDue
-      }];
-      
-      console.log("Cuota extraída:", quotas[0]);
-      
-      // Si no se encontraron cuotas pero hay información de contrato, intentamos un enfoque alternativo
-      if (quotas.length === 0 && responseText.includes("Contrato")) {
-        console.log("Enfoque alternativo para extraer cuotas");
         
-        // Buscar información del contrato
-        const contractNumberMatch = responseText.match(/Contrato\s+([A-Z0-9]+)/);
-        const licensePlateMatch = responseText.match(/Patente\s+([A-Z0-9•-]+)/);
-        const vehicleTypeMatch = responseText.match(/Vehículo\s+([A-ZÁÉÍÓÚÑ0-9\s]+)/);
-        
-        const contractNumber = contractNumberMatch ? contractNumberMatch[1].trim() : "N/A";
-        const licensePlate = licensePlateMatch ? licensePlateMatch[1].trim() : "XX-XX-XX";
-        const vehicleType = vehicleTypeMatch ? vehicleTypeMatch[1].trim() : "VEHÍCULO";
-        const pacPatActive = responseText.includes("PAC/PAT Activo");
-        
-        // Buscar información de cuota
-        const quotaNumberMatch = responseText.match(/Cuota N°(\d+)/);
-        const daysMatch = responseText.match(/Vence en (\d+) días?/);
-        const amountMatches = responseText.match(/\$([0-9.]+)(?:\s+\$([0-9.]+))?(?:\s+\$([0-9.]+))?/);
-        
-        if (quotaNumberMatch || daysMatch || amountMatches) {
-          const quotaNumber = quotaNumberMatch ? quotaNumberMatch[1] : "1";
-          const daysUntilDue = daysMatch ? parseInt(daysMatch[1]) : 10;
-          
-          let quotaAmount = "$0";
-          let interestAmount = "$0"; 
-          let totalAmount = "$0";
-          
-          if (amountMatches) {
-            if (amountMatches[1]) quotaAmount = "$" + amountMatches[1];
-            if (amountMatches[2]) interestAmount = "$" + amountMatches[2];
-            if (amountMatches[3]) totalAmount = "$" + amountMatches[3];
-          }
+        // Crear el objeto de cuota con la información extraída
+        quotas.push({
+          contractNumber,
+          licensePlate,
+          vehicleType,
+          pacPatActive,
+          quotaNumber,
+          quotaAmount,
+          interestAmount,
+          totalAmount,
+          daysUntilDue,
+          dueDate
+        });
+      });
+      
+      console.log("Cuotas extraídas:", quotas);
+      
+      // Si no se encontraron cuotas pero tenemos datos desde el servidor, usarlos
+      if (quotas.length === 0 && requestData) {
+        if (requestData.contractNumber || requestData.amount) {
+          console.log("Usando datos del servidor para crear cuota");
           
           quotas.push({
-            contractNumber,
-            licensePlate,
-            vehicleType,
-            pacPatActive,
-            quotaNumber,
-            quotaAmount,
-            interestAmount,
-            totalAmount,
-            daysUntilDue
+            contractNumber: requestData.contractNumber || "000000",
+            licensePlate: requestData.licensePlate || "XX-XX-XX",
+            vehicleType: requestData.vehicleType || "AUTOMÓVIL",
+            pacPatActive: false,
+            quotaNumber: requestData.quotaNumber || "1",
+            quotaAmount: requestData.amount || "$0",
+            interestAmount: requestData.interestAmount || "$0",
+            totalAmount: requestData.totalAmount || "$0",
+            daysUntilDue: 10
           });
-          
-          console.log("Cuota extraída (enfoque alternativo):", quotas[0]);
         }
       }
       
-      // Si aún no hay cuotas, crear una por defecto para evitar errores
+      // Si después de todo aún no hay cuotas, crear una por defecto
       if (quotas.length === 0) {
         console.log("No se encontraron cuotas, creando una por defecto");
         quotas.push({
@@ -380,6 +260,20 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
           totalAmount: "$0",
           daysUntilDue: 10
         });
+      }
+      
+      // Determinar si debe mostrar suscripción PAC/PAT
+      const showPacPat = responseText.includes("PAC/PAT Activo") || 
+                         responseText.includes("PAC o PAT") ||
+                         responseText.includes("suscribir el pago");
+      
+      // Extraer información de advertencia
+      let warningMessage: string | undefined = undefined;
+      if (responseText.includes("El pago vía PAC/PAT puede tardar")) {
+        const warningRegex = /(El pago vía PAC\/PAT puede tardar[^]*?\*\*[^]*?señalado)/;
+        const warningMatch = responseText.match(warningRegex);
+        warningMessage = warningMatch ? warningMatch[1] : undefined;
+        console.log("Mensaje de advertencia extraído:", warningMessage);
       }
       
       return {

@@ -1,0 +1,113 @@
+Formato del input: El usuario ingresará un texto en un <textarea> con el siguiente formato (puede haber una o más cuotas, y el número de cuotas es variable):
+CRISTIAN SERVANDO VALENZUELA BUSTOS
+17.546.765-3
+Cuotas a pagar
+Método de pago
+Comprobante de pago
+Cuotas a pagar
+Contrato
+744530
+PAC/PAT Activo
+El pago vía PAC/PAT puede tardar hasta 5 días hábiles en verse reflejado.
+** Si el cargo se hubiera realizado dentro de la fecha de pago correspondiente, no se aplicará el interés por mora señalado
+Cuota N°6
+Cuota
+Interés Mora
+Total Cuota
+Venció el 05/04/2025
+$1.358.270
+$995
+$1.359.265
+Contrato
+1210457
+PAC/PAT Activo
+El pago vía PAC/PAT puede tardar hasta 5 días hábiles en verse reflejado.
+** Si el cargo se hubiera realizado dentro de la fecha de pago correspondiente, no se aplicará el interés por mora señalado
+Cuota N°3
+Cuota
+Interés Mora
+Total Cuota
+Vence en 25 días
+$917.539
+$0
+$917.539
+
+Las primeras dos líneas siempre serán el nombre del cliente y su RUT.
+
+Luego hay líneas de encabezado que no se usarán ("Cuotas a pagar", "Método de pago", "Comprobante de pago").
+
+Después, cada cuota comienza con una línea que dice "Cuota N°X" (por ejemplo, "Cuota N°6").
+
+Cada cuota tiene información como el número de contrato, si está activa con PAC/PAT, un mensaje de advertencia, la fecha de vencimiento, el monto de la cuota, el interés por mora y el total de la cuota.
+Procesamiento del input:
+Lee el texto del <textarea> y divídelo en líneas, eliminando líneas vacías.
+
+Extrae el nombre del cliente (primera línea) y el RUT (segunda línea).
+
+Identifica cada cuota: cada vez que encuentres una línea que comience con "Cuota N°", inicia una nueva cuota.
+
+Para cada cuota, captura la siguiente información:
+Número de cuota (por ejemplo, "Cuota N°6").
+
+Número de contrato (aparece después de la línea "Contrato").
+
+Estado PAC/PAT (línea que dice "PAC/PAT Activo").
+
+Mensaje de advertencia (líneas que comienzan con "El pago vía PAC/PAT" y "** Si el cargo").
+
+Fecha de vencimiento (línea que comienza con "Vence" o "Venció").
+
+Monto de la cuota, interés mora y total de la cuota (líneas que comienzan con "$", en ese orden).
+Almacena cada cuota como un objeto con estas propiedades.
+Mostrar la información en la página:
+La página tiene un contenedor con el ID cuotasList donde se deben mostrar las cuotas.
+
+Primero, muestra el nombre del cliente y el RUT en la parte superior del contenedor cuotasList.
+
+Luego, por cada cuota, genera un recuadro (un <div> con la clase cuota-item) que contenga:
+Un checkbox para seleccionar la cuota (con un ID único, por ejemplo, cuota-0, cuota-1, etc.).
+
+El número de la cuota (por ejemplo, "Cuota N°6") en un <h3>.
+
+La fecha de vencimiento (por ejemplo, "Venció el 05/04/2025") en un <p>.
+
+El número de contrato en un <div> con la clase contrato.
+
+El estado PAC/PAT (por ejemplo, "PAC/PAT Activo") en un <div> con la clase pac-pat.
+
+Los mensajes de advertencia en un <div> con la clase warning.
+
+Los detalles de la cuota (monto, interés mora y total) en un <div> con la clase cuota-details, organizados en dos columnas: una con "Cuota" e "Interés Mora", y otra con "Total Cuota".
+Resumen de pago:
+La página tiene un contenedor con la clase resumen-section que muestra un resumen de pago a la derecha.
+
+Este contenedor tiene los siguientes elementos:
+Un <span> con ID totalCuotas para mostrar el número de cuotas seleccionadas.
+
+Un <span> con ID totalInteres para mostrar el total de interés mora.
+
+Un <span> con ID totalGastos para mostrar los gastos de cobranza (siempre será 0 en este caso).
+
+Un <span> con ID totalPagar para mostrar el total a pagar.
+Cuando el usuario marque o desmarque un checkbox de una cuota, actualiza el resumen:
+Cuenta cuántas cuotas están seleccionadas y muestra ese número en totalCuotas.
+
+Suma el interés mora de las cuotas seleccionadas y muéstralo en totalInteres (formatea los números con separadores de miles, por ejemplo, "995").
+
+Suma el total de las cuotas seleccionadas y muéstralo en totalPagar (formatea los números con separadores de miles, por ejemplo, "1.359.265").
+
+Mantén totalGastos en 0.
+Botón "Continuar":
+La página tiene un botón con la función continuarPago() en el contenedor resumen-section.
+
+Si el total a pagar es 0 (es decir, no hay cuotas seleccionadas), muestra un mensaje de alerta que diga: "Por favor seleccione al menos una cuota para continuar."
+
+Si hay cuotas seleccionadas, muestra un mensaje de alerta que diga: "Procediendo al pago de $[totalPagar]", donde [totalPagar] es el valor mostrado en el elemento con ID totalPagar.
+Consideraciones adicionales:
+El número de cuotas es variable (puede haber 1, 2, o más cuotas en el input).
+
+Asegúrate de que los valores monetarios se muestren con el formato correcto (por ejemplo, "$1.359.265").
+
+La página ya tiene un diseño CSS funcional, así que usa las clases e IDs mencionados para que el diseño se aplique correctamente.
+Con estas instrucciones, el sistema debe procesar el input, mostrar las cuotas en recuadros dinámicos, permitir al usuario seleccionar las cuotas que desea pagar, actualizar el resumen de pago en tiempo real y permitir continuar con el pago si hay cuotas seleccionadas.
+
