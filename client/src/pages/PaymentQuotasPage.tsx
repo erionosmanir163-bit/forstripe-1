@@ -249,20 +249,40 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
           console.log(`Vencimiento encontrado: ${dueDate} (días: ${daysUntilDue})`);
         }
         
-        // Extraer los montos
+        // Extraer los montos - usar directamente los valores exactos encontrados en el texto
         if (cuotaIndex !== -1 && cuotaIndex + 1 < quotaLines.length) {
+          // Tomar el valor exactamente como aparece, sin procesar
           quotaAmount = quotaLines[cuotaIndex + 1].trim();
-          console.log(`Monto cuota: ${quotaAmount}`);
+          console.log(`Monto cuota (exacto): ${quotaAmount}`);
         }
         
         if (interesIndex !== -1 && interesIndex + 1 < quotaLines.length) {
+          // Tomar el valor exactamente como aparece, sin procesar
           interestAmount = quotaLines[interesIndex + 1].trim();
-          console.log(`Interés mora: ${interestAmount}`);
+          console.log(`Interés mora (exacto): ${interestAmount}`);
         }
         
         if (totalIndex !== -1 && totalIndex + 1 < quotaLines.length) {
+          // Tomar el valor exactamente como aparece, sin procesar
           totalAmount = quotaLines[totalIndex + 1].trim();
-          console.log(`Total cuota: ${totalAmount}`);
+          console.log(`Total cuota (exacto): ${totalAmount}`);
+        }
+        
+        // Buscar manualmente valores monetarios si los índices no se encontraron
+        if (!quotaAmount.includes('$') || !totalAmount.includes('$')) {
+          for (let i = 0; i < quotaLines.length; i++) {
+            const line = quotaLines[i].trim();
+            if (line.startsWith('$') && !quotaAmount.includes('$')) {
+              quotaAmount = line;
+              console.log(`Monto cuota detectado manualmente: ${quotaAmount}`);
+            } else if (line.startsWith('$') && quotaAmount.includes('$') && !interestAmount.includes('$')) {
+              interestAmount = line;
+              console.log(`Interés mora detectado manualmente: ${interestAmount}`);
+            } else if (line.startsWith('$') && quotaAmount.includes('$') && interestAmount.includes('$') && !totalAmount.includes('$')) {
+              totalAmount = line;
+              console.log(`Total cuota detectado manualmente: ${totalAmount}`);
+            }
+          }
         }
         
         // Crear el objeto de cuota con la información extraída
@@ -454,9 +474,9 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
               vehicleType: "PEUGEOT XXXXX 2025",
               pacPatActive: true,
               quotaNumber: "6",
-              quotaAmount: "$1.358.270",
+              quotaAmount: "$1.359.000",
               interestAmount: "$0",
-              totalAmount: "$1.358.270",
+              totalAmount: "$1.359.000",
               daysUntilDue: 0
             },
             {
@@ -465,9 +485,9 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
               vehicleType: "CHEVROLET XXXXXXXXX 2023",
               pacPatActive: true,
               quotaNumber: "3",
-              quotaAmount: "$917.539",
+              quotaAmount: "$917.000",
               interestAmount: "$0",
-              totalAmount: "$917.539",
+              totalAmount: "$917.000",
               daysUntilDue: 28
             }
           ],

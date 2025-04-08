@@ -482,9 +482,9 @@ Cuota
 Interés Mora
 Total Cuota
 Venció el 05/04/2025
-$1.358.270
+$1.359.000
 $0
-$1.358.270
+$1.359.000
 
 Contrato
 1210457
@@ -499,9 +499,9 @@ Cuota
 Interés Mora
 Total Cuota
 Vence en 27 días
-$917.539
+$917.000
 $0
-$917.539`}
+$917.000`}
                   />
                 </div>
                 
