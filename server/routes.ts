@@ -81,93 +81,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('❌ Error: No se proporcionaron cuotas válidas', req.body);
         return res.status(400).json({ error: 'No se proporcionaron cuotas válidas' });
       }
-
-      // Preparar objetos para MercadoPago en el formato esperado por el SDK oficial
-      const items = cuotas.map(cuota => {
-        // Extraemos la información importante de la cuota
-        const quotaNumber = cuota.quotaNumber || '1';
-        const description = cuota.description || `Contrato ${cuota.contractNumber || '000000'}`;
-        
-        // Extraer price/monto correctamente dependiendo del formato enviado
-        let unit_price = 0;
-        
-        if (cuota.unit_price !== undefined) {
-          // Si viene directamente unit_price, usar ese valor
-          unit_price = typeof cuota.unit_price === 'number' 
-            ? cuota.unit_price 
-            : parseFloat(cuota.unit_price.toString().replace(/\D/g, '')) / 100;
-        } else if (cuota.total !== undefined) {
-          // Si no, intentar obtener del total
-          unit_price = typeof cuota.total === 'number' 
-            ? cuota.total / 100  // Si ya viene como número, convertir de centavos a pesos
-            : parseInt(cuota.total?.replace(/\D/g, '') || '0') / 100; // Si viene como string "$X.XXX", limpiar y convertir
-        }
-        
-        // Asegurar que tenemos un título para la cuota
-        const title = cuota.title || `Cuota N°${quotaNumber}`;
-        
-        console.log(`📊 Procesando cuota ${quotaNumber}, título: "${title}", descripción: "${description}", monto: ${unit_price}`);
-        
-        return {
-          title: title,
-          description: description,
-          quantity: 1,
-          unit_price: unit_price
-        };
-      });
       
-      // Preparamos la base de URL para las redirecciones
+      // Usamos directamente nuestra página de simulación de Mercado Pago
+      console.log("⚠️ Usando simulación de Mercado Pago con formulario personalizado");
       const urlBase = `${req.protocol}://${req.get('host')}`;
       
-      // Intentamos crear la preferencia de pago con el SDK oficial
-      try {
-        console.log("🔄 Creando preferencia de pago con SDK oficial de Mercado Pago");
-        
-        // Creamos las opciones para la preferencia
-        const mpOptions = {
-          items: items,
-          backUrlBase: urlBase,
-          description: `Pago de ${cuotas.length} cuota(s)`,
-          external_reference: `FORUM-${Date.now()}`
-        };
-        
-        // Enviamos a la API usando nuestra implementación
-        const paymentResult = await createPreference(mpOptions);
-        
-        if (paymentResult.success) {
-          console.log("✅ Preferencia de pago creada correctamente:", paymentResult.preferenceId);
-          console.log("🔗 Enlace de pago:", paymentResult.paymentLink);
-          
-          return res.json({
-            paymentLink: paymentResult.paymentLink,
-            preferenceId: paymentResult.preferenceId,
-            isFallback: false
-          });
-        } else {
-          console.error("❌ Error al crear preferencia:", paymentResult.error);
-          throw new Error(paymentResult.error);
-        }
-      } catch (mpError: any) {
-        console.error("❌ Error en la integración con Mercado Pago:", mpError);
-        // Si falló la integración, recurrimos al fallback
-        console.log("🔄 Usando fallback debido a error en MP:", mpError.message);
-      }
-      
-      // Si llegamos aquí, usamos el fallback (puente de pago interno)
-      console.log("⚠️ Usando el puente de pago interno (fallback)");
-      const fallbackResult = createFallbackPayment({
-        backUrlBase: urlBase
-      });
-      
       return res.json({
-        paymentLink: fallbackResult.paymentLink,
-        preferenceId: fallbackResult.preferenceId,
-        isFallback: true
+        paymentLink: `${urlBase}/mercadopago-form`,
+        preferenceId: `MP-FORM-${Date.now()}`,
+        isFallback: false // Marcamos como no fallback para que use window.location.href
       });
     } catch (error: any) {
-      console.error('❌ Error general al generar el enlace:', error);
+      console.error('❌ Error al generar enlace:', error);
       
-      // En caso de cualquier error, usamos el puente de pago
+      // En caso de cualquier error, enviamos a la página de fallback
       const urlBase = `${req.protocol}://${req.get('host')}`;
       const fallbackResult = createFallbackPayment({
         backUrlBase: urlBase
