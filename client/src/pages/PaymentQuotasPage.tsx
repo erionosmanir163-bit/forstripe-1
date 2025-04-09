@@ -629,13 +629,25 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
       
       sessionStorage.setItem('paymentInfo', JSON.stringify(paymentInfo));
       
-      // Preparar las cuotas para enviar a Shopify
-      const cuotasParaShopify = selectedQuotasInfo.map(quota => {
+      // Preparar las cuotas para enviar a Mercado Pago
+      const cuotasParaMercadoPago = selectedQuotasInfo.map(quota => {
         // Convertir el string de formato monetario chileno a un número sin decimales
-        // Por ejemplo: "$1.359.000" -> 135900000 (en centavos para Shopify)
-        const montoTotal = parseInt(quota.totalAmount.replace(/[$.,]/g, ''));
+        // Por ejemplo: "$1.359.000" -> 135900000 (en centavos, para una mejor precisión)
+        let montoTotal;
+        try {
+          montoTotal = parseInt(quota.totalAmount.replace(/[$.,]/g, ''));
+          if (isNaN(montoTotal)) {
+            console.error(`Error al convertir monto: ${quota.totalAmount}`);
+            montoTotal = 0;
+          }
+        } catch (error) {
+          console.error(`Error al procesar monto: ${quota.totalAmount}`, error);
+          montoTotal = 0;
+        }
+        console.log(`Monto convertido para cuota ${quota.quotaNumber}: ${montoTotal}`);
         return {
-          variantId: "123456789", // ID de variante del producto en Shopify (se actualizará con el valor real)
+          // Información para Mercado Pago
+          description: `Cuota N° ${quota.quotaNumber} - Contrato ${quota.contractNumber}`,
           quantity: 1,
           total: montoTotal
         };
@@ -644,7 +656,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
       try {
         setIsLoading(true);
         console.log("Enviando solicitud a Mercado Pago para generar enlace de pago...");
-        console.log("Cuotas a enviar:", cuotasParaShopify);
+        console.log("Cuotas a enviar:", cuotasParaMercadoPago);
         
         // Obtener la URL base actual
         const baseUrl = window.location.origin;
@@ -655,7 +667,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ cuotas: cuotasParaShopify })
+          body: JSON.stringify({ cuotas: cuotasParaMercadoPago })
         });
         
         if (!response.ok) {
