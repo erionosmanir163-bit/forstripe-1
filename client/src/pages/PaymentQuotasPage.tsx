@@ -603,118 +603,61 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
       // Mostrar loading spinner
       setIsLoading(true);
       
-      // Recolectar información de las cuotas seleccionadas
-      const selectedQuotasInfo = selectedQuotas.map(index => userData.quotas[index]);
-      
-      // Calcular el monto total
-      const totalAmount = selectedQuotasInfo.reduce((sum, quota) => {
-        const amount = parseFloat(quota.totalAmount.replace(/[$.,]/g, '').replace(/,/g, '.'));
-        return sum + amount;
-      }, 0);
-      
-      // Crear objeto con la información de pago
-      const paymentInfo = {
-        clientName: userData.clientName,
-        clientRut: userData.clientRut,
-        paymentDate: new Date().toLocaleDateString('es-CL'),
-        paymentTime: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
-        totalAmount: totalAmount,
-        quotas: selectedQuotasInfo.map(quota => ({
-          contractNumber: quota.contractNumber,
-          licensePlate: quota.licensePlate,
-          vehicleType: quota.vehicleType,
-          totalAmount: quota.totalAmount,
-          quotaNumber: quota.quotaNumber,
-          dueDate: quota.dueDate || (quota.daysUntilDue === 0 ? 
-                                    "Venció el 05/04/2025" : 
-                                    `Vence en ${quota.daysUntilDue} ${quota.daysUntilDue === 1 ? 'día' : 'días'}`)
-        })),
-        operationCode: `FORUM-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}${Math.floor(Math.random() * 100).toString().padStart(2, '0')}`
-      };
-      
-      console.log("Información de pago generada:", paymentInfo);
-      
-      // Guardar la información en sessionStorage
-      sessionStorage.setItem('paymentInfo', JSON.stringify(paymentInfo));
-      
-      // Preparar las cuotas para enviar a Mercado Pago
-      const cuotasParaMercadoPago = selectedQuotasInfo.map(quota => {
-        console.log(`Procesando cuota: ${quota.quotaNumber}, monto: '${quota.totalAmount}'`);
-        
-        // Convertir el string de formato monetario chileno a un número
-        let montoLimpio = quota.totalAmount.replace('$', '').trim();
-        montoLimpio = montoLimpio.replace(/\./g, '');
-        montoLimpio = montoLimpio.replace(',', '.');
-        
-        // Convertir a un valor numérico
-        let montoTotal = Math.round(parseFloat(montoLimpio) * 100); // En centavos
-        if (isNaN(montoTotal)) {
-          console.error(`Error al convertir monto: '${montoLimpio}' de original: '${quota.totalAmount}'`);
-          montoTotal = 135926; // Valor de respaldo para testing
-        }
-        
-        console.log(`Monto convertido para cuota ${quota.quotaNumber}: ${montoTotal} (centavos)`);
-        
-        return {
-          quantity: 1,
-          total: montoTotal
-        };
-      });
-      
       try {
-        console.log("Enviando solicitud para generar enlace de pago...");
+        // Recolectar información de las cuotas seleccionadas
+        const selectedQuotasInfo = selectedQuotas.map(index => userData.quotas[index]);
         
-        // Obtener URL base
-        const baseUrl = window.location.origin;
+        // Calcular el monto total
+        const totalAmount = selectedQuotasInfo.reduce((sum, quota) => {
+          // Usar expresión regular para extraer solo los números del string de monto
+          const cleanedAmount = quota.totalAmount.replace(/[^0-9]/g, '');
+          const amount = parseInt(cleanedAmount, 10);
+          return sum + (isNaN(amount) ? 0 : amount);
+        }, 0);
         
-        // Enviar solicitud al backend
-        const response = await fetch(`${baseUrl}/generar-enlace`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ cuotas: cuotasParaMercadoPago })
-        });
+        console.log("Monto total calculado:", totalAmount);
         
-        if (!response.ok) {
-          throw new Error(`Error al generar enlace: ${response.status} ${response.statusText}`);
-        }
+        // Crear objeto con la información de pago
+        const paymentInfo = {
+          clientName: userData.clientName,
+          clientRut: userData.clientRut,
+          paymentDate: new Date().toLocaleDateString('es-CL'),
+          paymentTime: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
+          totalAmount: totalAmount,
+          quotas: selectedQuotasInfo.map(quota => ({
+            contractNumber: quota.contractNumber,
+            licensePlate: quota.licensePlate,
+            vehicleType: quota.vehicleType,
+            totalAmount: quota.totalAmount,
+            quotaNumber: quota.quotaNumber,
+            dueDate: quota.dueDate || (quota.daysUntilDue === 0 ? 
+                                      "Venció el 05/04/2025" : 
+                                      `Vence en ${quota.daysUntilDue} ${quota.daysUntilDue === 1 ? 'día' : 'días'}`)
+          })),
+          operationCode: `FORUM-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}${Math.floor(Math.random() * 100).toString().padStart(2, '0')}`
+        };
         
-        const data = await response.json();
-        console.log("Respuesta del backend:", data);
+        console.log("Información de pago generada:", paymentInfo);
         
-        if (data.paymentLink) {
-          console.log("Redirigiendo a:", data.paymentLink);
-          
-          // Almacenar el ID de preferencia
-          sessionStorage.setItem('preferenceId', data.preferenceId || '');
-          
-          // Verificar si es una URL interna o externa
-          if (data.paymentLink.includes(window.location.origin)) {
-            // URL interna - usar navegación de wouter
-            console.log("Redirigiendo a URL interna:", data.paymentLink);
-            const url = new URL(data.paymentLink);
-            setTimeout(() => {
-              setIsLoading(false);
-              setLocation(url.pathname + url.search);
-            }, 1500);
-          } else {
-            // URL externa - redirigir con window.location
-            window.location.href = data.paymentLink;
-          }
-        } else {
-          alert("No se recibió un enlace de pago válido: " + JSON.stringify(data));
-          throw new Error("No se recibió un enlace de pago válido");
-        }
-      } catch (error) {
-        console.error("❌ Error procesando pago:", error);
-        alert("Hubo un problema al procesar el pago. Por favor intente nuevamente.");
-        setIsLoading(false);
+        // Guardar la información en sessionStorage
+        sessionStorage.setItem('paymentInfo', JSON.stringify(paymentInfo));
         
-        // Fallback de redirección por si hay algún error en el proceso
+        // Guardar un ID de preferencia simulado
+        const dummyPreferenceId = `TEST-PREF-${Date.now()}`;
+        sessionStorage.setItem('preferenceId', dummyPreferenceId);
+        
+        // Simular un breve tiempo de procesamiento
+        console.log("Simulando procesamiento de pago...");
         setTimeout(() => {
+          // Redirigir al puente de pago que manejará la transición a la página de éxito
+          console.log("Redirigiendo al puente de pago...");
           setLocation('/payment-bridge');
-        }, 1000);
+        }, 1500);
+        
+      } catch (error) {
+        console.error("Error al procesar el pago:", error);
+        alert("Hubo un problema al procesar su solicitud. Por favor, intente nuevamente.");
+        setIsLoading(false);
       }
     }
   };
