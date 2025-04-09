@@ -674,7 +674,28 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
       
       try {
         setIsLoading(true);
-        console.log("Enviando solicitud a Mercado Pago para generar enlace de pago...");
+        console.log("Iniciando simulación de pago con Mercado Pago...");
+        
+        // Modo de desarrollo/prueba: simular directamente el proceso de pago
+        // En lugar de hacer la llamada al servidor, simplemente almacenamos los datos y pasamos a la siguiente pantalla
+        console.log("SIMULANDO PAGO: Guardando información en sessionStorage y redirigiendo...");
+        
+        // Almacenar información de pago en sessionStorage
+        sessionStorage.setItem('paymentInfo', JSON.stringify(paymentInfo));
+        sessionStorage.setItem('preferenceId', `TEST-PREF-${Date.now()}`);
+        
+        // Simular procesamiento por un corto período y luego redirigir
+        setTimeout(() => {
+          setIsLoading(false);
+          setLocation('/payment-success?status=approved&simulation=true');
+        }, 1500);
+        
+        return; // Terminamos aquí en modo simulación
+        
+        /*
+        // NOTA: El código siguiente está desactivado temporalmente mientras usamos la simulación directa
+        // Este código se usaría para integración real con Mercado Pago
+        
         console.log("Cuotas a enviar:", cuotasParaMercadoPago);
         
         // Obtener la URL base actual
@@ -724,6 +745,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
         } else {
           throw new Error("No se recibió un enlace de pago válido de Mercado Pago");
         }
+        */
       } catch (error) {
         console.error("Error al procesar el pago con Mercado Pago:", error);
         alert("Hubo un problema al generar el enlace de pago. Por favor, inténtelo de nuevo más tarde.");
