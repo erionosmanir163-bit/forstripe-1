@@ -665,23 +665,31 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
         // Guardar cuotas seleccionadas para mostrarlas en la página de éxito
         sessionStorage.setItem('selectedQuotas', JSON.stringify(selectedQuotasInfo));
         
-        // Redirigir al enlace de pago
-        // Si estamos utilizando Mercado Pago (no es fallback), siempre redirigir a URL externa
-        if (!data.isFallback && data.paymentLink.startsWith('http')) {
-          console.log("Redirigiendo a Mercado Pago (URL externa):", data.paymentLink);
-          // URL externa de Mercado Pago - usar window.location directamente para redirigir
-          window.location.href = data.paymentLink;
-        } 
-        // Si es fallback o una URL interna, usar wouter para navegar
-        else {
-          // Obtenemos la ruta relativa si es una URL completa interna
-          const path = data.paymentLink.includes(window.location.host) 
-            ? new URL(data.paymentLink).pathname
-            : data.paymentLink;
-            
-          console.log("Redirigiendo a ruta interna (fallback):", path);
-          setLocation(path);
-        }
+        // Redirigir al enlace de pago con tiempo para asegurar que todo se guarde
+        setTimeout(() => {
+          // Si estamos utilizando Mercado Pago (no es fallback), siempre redirigir a URL externa
+          if (!data.isFallback && data.paymentLink.startsWith('http')) {
+            console.log("🔄 Redirigiendo a Mercado Pago (URL externa):", data.paymentLink);
+            // URL externa de Mercado Pago - usar window.location.replace para redirigir correctamente
+            window.location.replace(data.paymentLink);
+          } 
+          // Si es fallback o una URL interna, usar wouter para navegar
+          else {
+            try {
+              // Obtenemos la ruta relativa si es una URL completa interna
+              const path = data.paymentLink.includes(window.location.host) 
+                ? new URL(data.paymentLink).pathname
+                : data.paymentLink;
+                
+              console.log("🔄 Redirigiendo a ruta interna (fallback):", path);
+              setLocation(path);
+            } catch (error) {
+              console.error("Error al procesar URL:", error);
+              // En caso de error, redirigir a success directamente
+              setLocation('/payment-success');
+            }
+          }
+        }, 200);
       } else {
         throw new Error("No se recibió un enlace de pago válido");
       }
