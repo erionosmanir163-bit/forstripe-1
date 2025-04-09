@@ -63,11 +63,13 @@ app.post('/generar-enlace', async (req, res) => {
     
     console.log('Draft Order simulado:', draftOrder);
     
-    // Simular completado de orden
+    // Simular completado de orden con un enlace funcional
+    // En lugar de intentar redirigir a Shopify directamente (lo que requiere una tienda configurada),
+    // usaremos un enlace simulado a PaymentSuccessPage para pruebas
     const completedOrder = {
       id: draftOrderId,
       status: "completed",
-      invoice_url: `https://checkout.shopify.com/c/${process.env.SHOPIFY_STORE_URL}/checkouts/${Date.now()}-${Math.random().toString(36).substring(2, 10)}`
+      invoice_url: `${req.protocol}://${req.get('host')}/payment-success?order=${draftOrderId}&timestamp=${Date.now()}`
     };
     
     console.log('Order completado, enlace generado:', completedOrder.invoice_url);

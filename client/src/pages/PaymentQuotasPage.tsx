@@ -667,7 +667,17 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
         
         if (data.paymentLink) {
           console.log("Redirigiendo al enlace de pago:", data.paymentLink);
-          window.location.href = data.paymentLink;
+          
+          // Si el enlace es interno (apunta a payment-success), usar setLocation para navegación interna
+          if (data.paymentLink.includes('/payment-success')) {
+            console.log("Detectado enlace interno, usando navegación de Wouter");
+            setIsLoading(false);
+            setLocation('/payment-success');
+          } else {
+            // Si es un enlace externo (Shopify real), usar redirección de navegador
+            console.log("Redirigiendo a enlace externo de Shopify");
+            window.location.href = data.paymentLink;
+          }
         } else {
           throw new Error("No se recibió un enlace de pago válido");
         }
