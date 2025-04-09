@@ -612,20 +612,29 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
       // Crear el array de cuotas para enviar a Mercado Pago
       const cuotasParaMercadoPago = selectedQuotasInfo.map(quota => {
         // Extraer solo los números del string de monto (eliminar puntos, símbolos, etc.)
+        console.log(`💲 Procesando monto de cuota: ${quota.totalAmount}`);
         const cleanedAmount = quota.totalAmount.replace(/[^0-9]/g, '');
+        console.log(`💲 Monto limpio (sin puntos/símbolos): ${cleanedAmount}`);
+        
         // Convertimos a número entero para el backend
         const totalAmount = parseInt(cleanedAmount, 10);
-        // El unit_price debe estar en pesos, no en centavos para Mercado Pago
-        const unitPrice = totalAmount / 100; 
+        console.log(`💲 Monto total como entero: ${totalAmount}`);
         
-        return {
+        // El unit_price debe estar en la moneda base (pesos completos, no centavos)
+        // NO dividimos por 100 porque ya está en pesos chilenos
+        const unitPrice = totalAmount;
+        console.log(`💲 Precio unitario final para MP: ${unitPrice}`);
+        
+        const cuotaObj = {
           title: `Cuota N°${quota.quotaNumber}`,
           description: `Contrato ${quota.contractNumber}`,
           quantity: 1,
           unit_price: unitPrice,
-          currency_id: 'CLP',  // Pesos chilenos
-          total: totalAmount
+          currency_id: 'CLP'  // Pesos chilenos
         };
+        
+        console.log(`📦 Objeto de cuota procesado:`, cuotaObj);
+        return cuotaObj;
       });
       
       console.log("Cuotas preparadas para Mercado Pago:", cuotasParaMercadoPago);
