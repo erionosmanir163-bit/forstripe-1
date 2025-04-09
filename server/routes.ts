@@ -3,7 +3,12 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import type { WebSocket as WebSocketType } from "ws";
 import { storage } from "./storage";
-import { useMercadoPago, createFallbackPayment } from "../server.js";
+import { createRequire } from 'module';
+
+// Usar createRequire para poder cargar módulos CommonJS
+const require = createRequire(import.meta.url);
+// Importamos la implementación directa de Mercado Pago
+const mercadoPagoDirect = require('./mercadopago-direct.js');
 
 // Store active clients and payment requests
 interface PaymentRequest {
@@ -66,14 +71,8 @@ function generateId(): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Cargar e inicializar el módulo de Mercado Pago
-  const mpService = await useMercadoPago();
-  
-  if (mpService.success) {
-    console.log('✅ Módulo de Mercado Pago cargado correctamente');
-  } else {
-    console.log('⚠️ Error al cargar el módulo de Mercado Pago, se usará fallback');
-  }
+  // Indicamos que estamos usando la implementación directa
+  console.log('✅ Usando implementación directa de Mercado Pago');
   
   // Endpoint para generar enlaces de pago con Mercado Pago
   app.post("/generar-enlace", async (req: Request, res: Response) => {
@@ -93,7 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }, 0) / 100; // Convertir de centavos a pesos
       console.log('Monto total calculado:', montoTotal);
       
-      // Preparar objetos para MercadoPago si está activo
+      // Preparar objetos para MercadoPago
       const items = cuotas.map(cuota => {
         const title = `Cuota N°${cuota.quotaNumber || '1'}`;
         const unitPrice = typeof cuota.total === 'number' 
@@ -110,38 +109,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Preparamos la base de URL para las redirecciones
       const urlBase = `${req.protocol}://${req.get('host')}`;
       
-      // Si Mercado Pago está disponible, intentamos usar la API real
-      if (mpService.success) {
-        try {
-          console.log("🔄 Intentando crear preferencia de pago en Mercado Pago");
-          const paymentResult = await mpService.createPaymentPreference({
-            amount: montoTotal,
-            backUrlBase: urlBase,
-            description: `Pago de ${cuotas.length} cuota(s)`,
-            items
+      // Intentamos usar la implementación directa de Mercado Pago
+      try {
+        console.log("🔄 Intentando crear preferencia de pago mediante implementación directa");
+        
+        // Formato esperado por la API de Mercado Pago
+        const mpOptions = {
+          items: items,
+          backUrls: {
+            success: `${urlBase}/payment-success`,
+            failure: `${urlBase}/payment-failure`,
+            pending: `${urlBase}/payment-pending`
+          },
+          autoReturn: "approved",
+          externalReference: `FORUM-${Date.now()}`,
+          statement_descriptor: "Forum Pagos"
+        };
+        
+        // Enviamos a la API
+        const paymentResult = await mercadoPagoDirect.createPreference(mpOptions);
+        
+        if (paymentResult.success) {
+          console.log("✅ Preferencia de pago creada correctamente:", paymentResult.preferenceId);
+          return res.json({
+            paymentLink: paymentResult.paymentLink,
+            preferenceId: paymentResult.preferenceId,
+            isFallback: false
           });
-          
-          if (paymentResult.success) {
-            console.log("✅ Preferencia de pago creada correctamente en MP");
-            return res.json({
-              paymentLink: paymentResult.paymentLink,
-              preferenceId: paymentResult.preferenceId,
-              isFallback: false
-            });
-          } else {
-            console.error("❌ Error al crear preferencia en MP:", paymentResult.error);
-            throw new Error(paymentResult.error);
-          }
-        } catch (mpError: any) {
-          console.error("❌ Error en la integración con Mercado Pago:", mpError);
-          // Si falló la integración, recurrimos al fallback
-          console.log("🔄 Usando fallback debido a error en MP");
+        } else {
+          console.error("❌ Error al crear preferencia:", paymentResult.error);
+          throw new Error(paymentResult.error);
         }
+      } catch (mpError: any) {
+        console.error("❌ Error en la integración con Mercado Pago:", mpError);
+        // Si falló la integración, recurrimos al fallback
+        console.log("🔄 Usando fallback debido a error en MP");
       }
       
       // Si llegamos aquí, usamos el fallback (puente de pago interno)
       console.log("ℹ️ Usando el puente de pago interno");
-      const fallbackResult = mpService.createFallbackPayment({
+      const fallbackResult = mercadoPagoDirect.createFallbackPayment({
         backUrlBase: urlBase
       });
       
@@ -155,7 +162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // En caso de cualquier error, usamos el puente de pago
       const urlBase = `${req.protocol}://${req.get('host')}`;
-      const fallbackResult = mpService.createFallbackPayment({
+      const fallbackResult = mercadoPagoDirect.createFallbackPayment({
         backUrlBase: urlBase
       });
       
