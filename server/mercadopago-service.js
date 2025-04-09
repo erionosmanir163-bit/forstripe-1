@@ -1,15 +1,19 @@
-// Importamos mercadopago y lo configuramos
+// Importamos la biblioteca de MercadoPago
 const mercadopago = require('mercadopago');
 
-// Exportamos las funciones para trabajar con Mercado Pago
-exports.initMercadoPago = function() {
+// Datos de la aplicación (puedes usar estos como valores predeterminados)
+const MP_USER_ID = '327992698'; 
+const MP_APP_ID = '5277893847107576';
+
+// Función para inicializar MercadoPago
+function initMercadoPago() {
   if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
     console.error('⚠️ No se encontró ACCESS_TOKEN para Mercado Pago');
     return false;
   }
 
   try {
-    // Configuramos mercadopago con el token
+    // Configuramos el SDK con el token de acceso
     mercadopago.configure({
       access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN
     });
@@ -20,10 +24,10 @@ exports.initMercadoPago = function() {
     console.error('❌ Error al inicializar Mercado Pago:', error);
     return false;
   }
-};
+}
 
 // Función para crear una preferencia de pago
-exports.createPaymentPreference = async function(options) {
+async function createPaymentPreference(options) {
   try {
     const { amount, backUrlBase, description = 'Pago de Cuotas' } = options;
     
@@ -72,10 +76,10 @@ exports.createPaymentPreference = async function(options) {
       error: error.message || 'Error desconocido al crear preferencia de pago'
     };
   }
-};
+}
 
 // Función para crear un pago de fallback (para desarrollo)
-exports.createFallbackPayment = function(options) {
+function createFallbackPayment(options) {
   const { backUrlBase } = options;
   
   return {
@@ -84,4 +88,11 @@ exports.createFallbackPayment = function(options) {
     preferenceId: `TEST-PREF-${Date.now()}`,
     isFallback: true
   };
+}
+
+// Exportamos las funciones públicas
+module.exports = {
+  initMercadoPago,
+  createPaymentPreference,
+  createFallbackPayment
 };
