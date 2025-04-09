@@ -588,7 +588,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
   };
   
   // Manejar el botón de continuar
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedQuotas.length === 0) {
       alert("Por favor seleccione al menos una cuota para pagar.");
       return;
@@ -628,15 +628,60 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
       console.log("Información de pago generada:", paymentInfo);
       
       sessionStorage.setItem('paymentInfo', JSON.stringify(paymentInfo));
+      
+      // Preparar las cuotas para enviar a Shopify
+      const cuotasParaShopify = selectedQuotasInfo.map(quota => {
+        // Convertir el string de formato monetario chileno a un número sin decimales
+        // Por ejemplo: "$1.359.000" -> 135900000 (en centavos para Shopify)
+        const montoTotal = parseInt(quota.totalAmount.replace(/[$.,]/g, ''));
+        return {
+          variantId: "123456789", // ID de variante del producto en Shopify (se actualizará con el valor real)
+          quantity: 1,
+          total: montoTotal
+        };
+      });
+      
+      try {
+        setIsLoading(true);
+        console.log("Enviando solicitud a Shopify para generar enlace de pago...");
+        console.log("Cuotas a enviar:", cuotasParaShopify);
+        
+        // Obtener la URL base actual
+        const baseUrl = window.location.origin;
+        
+        // Enviar solicitud al backend para generar el enlace de pago
+        const response = await fetch(`${baseUrl}/generar-enlace`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ cuotas: cuotasParaShopify })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Error al generar enlace: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log("Respuesta recibida:", data);
+        
+        if (data.paymentLink) {
+          console.log("Redirigiendo al enlace de pago:", data.paymentLink);
+          window.location.href = data.paymentLink;
+        } else {
+          throw new Error("No se recibió un enlace de pago válido");
+        }
+      } catch (error) {
+        console.error("Error al procesar el pago con Shopify:", error);
+        alert("Hubo un problema al generar el enlace de pago. Por favor, inténtelo de nuevo más tarde.");
+        setIsLoading(false);
+        
+        // Como fallback, si hay un error con Shopify, continuamos con el flujo original
+        setTimeout(() => {
+          setLocation('/payment-success');
+        }, 1500);
+      }
     }
-    
-    // Ir a la siguiente etapa (simulación de procesamiento de pago)
-    setIsLoading(true);
-    
-    // Simulamos un breve tiempo de procesamiento y luego redirigimos
-    setTimeout(() => {
-      setLocation('/payment-success');
-    }, 1500);
   };
   
   if (isLoading) {

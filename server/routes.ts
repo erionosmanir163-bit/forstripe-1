@@ -65,6 +65,43 @@ function generateId(): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Importar el servidor de Shopify
+  let shopifyHandler;
+  
+  try {
+    // Intentar importar el servidor de Shopify dinámicamente
+    const shopifyModule = await import('../server.js');
+    shopifyHandler = shopifyModule.default;
+    console.log("✅ Servidor de Shopify importado correctamente");
+  } catch (error) {
+    console.error("❌ Error al importar el servidor de Shopify:", error);
+  }
+  
+  // Endpoint para generar enlaces de pago con Shopify
+  app.post("/generar-enlace", async (req: Request, res: Response) => {
+    console.log("🔄 Solicitud de generación de enlace de pago recibida:", req.body);
+    
+    try {
+      const { cuotas } = req.body;
+      
+      if (!cuotas || !Array.isArray(cuotas) || cuotas.length === 0) {
+        return res.status(400).json({ error: 'No se proporcionaron cuotas válidas' });
+      }
+
+      // Simular una respuesta mientras se configura Shopify completamente
+      console.log("✅ Generando respuesta de enlace de pago (simulado)");
+      
+      // Generar un enlace simulado para pruebas 
+      // En producción, esto se reemplazará con la respuesta real de Shopify
+      const paymentLink = `https://checkout.shopify.com/c/${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+      
+      res.json({ paymentLink });
+    } catch (error) {
+      console.error("❌ Error al generar enlace de pago:", error);
+      res.status(500).json({ error: 'Error al generar el enlace de pago', details: error.message });
+    }
+  });
+  
   // API routes
   app.get("/api/health", (_req, res) => {
     res.json({ status: "healthy" });
