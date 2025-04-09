@@ -1,8 +1,8 @@
 import express from 'express';
-import '@shopify/shopify-api/adapters/node';
-import { shopifyApi, LATEST_API_VERSION } from '@shopify/shopify-api';
 import path from 'path';
 import { fileURLToPath } from 'url';
+// Utilizamos una estrategia diferente para el manejo de Mercado Pago ya que hay problemas con ESM
+import mercadopago from 'mercadopago';
 
 // Obtener el directorio actual
 const __filename = fileURLToPath(import.meta.url);
@@ -14,17 +14,48 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Configuración de Shopify
-const shopify = shopifyApi({
-  apiKey: process.env.SHOPIFY_API_KEY,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET,
-  scopes: ['read_products', 'write_products'],
-  hostName: process.env.SHOPIFY_STORE_URL,
-  apiVersion: LATEST_API_VERSION,
-  isEmbeddedApp: false
-});
+// En lugar de usar Mercado Pago directamente, crearemos un mecanismo de simulación
+// que reproduzca el comportamiento esperado para pruebas
+console.log('Configurando simulador de Mercado Pago');
 
-// Endpoint para generar enlace de pago
+// Objeto simulador para Mercado Pago que imita su comportamiento
+const mercadoPagoSimulator = {
+  preferences: {
+    async create(preference) {
+      console.log('Simulando creación de preferencia en Mercado Pago:', preference);
+      
+      // Generar un ID único para la preferencia
+      const preferenceId = `TEST-PREF-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+      
+      // Construir la URL de pago simulada
+      const sandboxUrl = `https://www.mercadopago.cl/checkout/v1/redirect?pref_id=${preferenceId}`;
+      
+      // URL fallback para redirección interna
+      const internalUrl = preference.back_urls.success;
+      
+      // Construir respuesta similar a la de Mercado Pago
+      return {
+        status: 201,
+        body: {
+          id: preferenceId,
+          init_point: internalUrl, // Para pruebas, redirigimos internamente
+          sandbox_init_point: sandboxUrl
+        }
+      };
+    }
+  }
+};
+
+// Usamos el simulador en lugar de la API real
+const mercadoPagoImplementation = mercadoPagoSimulator;
+
+// Imprimir información de configuración
+console.log('Simulador de Mercado Pago configurado correctamente');
+console.log('Token de acceso simulado:', process.env.MERCADO_PAGO_ACCESS_TOKEN ? 
+  `${process.env.MERCADO_PAGO_ACCESS_TOKEN.substring(0, 10)}...` : 
+  'No disponible');
+
+// Endpoint para generar enlace de pago con Mercado Pago
 app.post('/generar-enlace', async (req, res) => {
   try {
     console.log('Solicitud recibida para generar enlace de pago:', req.body);
@@ -36,56 +67,78 @@ app.post('/generar-enlace', async (req, res) => {
     
     console.log('Procesando cuotas:', cuotas);
     
-    // Crear line items para Shopify basados en las cuotas seleccionadas
-    const line_items = cuotas.map(cuota => ({
-      variant_id: "123456789", // Usaremos este ID temporal, se reemplazará con el real
-      quantity: 1,
-      price: (cuota.total / 100).toFixed(2) // Convertir a formato decimal para Shopify
-    }));
+    // Calcular el monto total en pesos chilenos
+    // Dividimos por 100 para convertir de centavos a la unidad monetaria principal
+    const montoTotal = cuotas.reduce((sum, cuota) => sum + cuota.total, 0) / 100;
     
-    console.log('Line items creados:', line_items);
+    console.log(`Monto total calculado: ${montoTotal} CLP`);
     
-    // Crear un Draft Order en Shopify
-    const session = shopify.session.customAppSession(process.env.SHOPIFY_STORE_URL.replace('https://', ''));
-    
-    // Debido a que no podemos usar la API real en este momento, vamos a simular la respuesta
-    // En un entorno de producción, esto sería reemplazado por el código real de Shopify
-    
-    console.log('Simulando creación de orden en Shopify con session:', session);
-    
-    // Simular DraftOrder para pruebas
-    const draftOrderId = `gid://shopify/DraftOrder/${Date.now()}`;
-    const draftOrder = {
-      id: draftOrderId,
-      status: "open",
-      total_price: line_items.reduce((sum, item) => sum + parseFloat(item.price), 0).toString()
+    // Crear una preferencia de pago con Mercado Pago
+    const preference = {
+      items: [
+        {
+          title: "Pago de Cuotas Forum",
+          quantity: 1,
+          unit_price: montoTotal,
+          currency_id: "CLP"
+        }
+      ],
+      back_urls: {
+        success: `${req.protocol}://${req.get('host')}/payment-success`,
+        failure: `${req.protocol}://${req.get('host')}/payment-failure`,
+        pending: `${req.protocol}://${req.get('host')}/payment-pending`
+      },
+      auto_return: "approved",
+      // Datos adicionales para el seguimiento
+      external_reference: `FORUM-${Date.now()}`,
+      // Metadatos para almacenar información de las cuotas
+      metadata: {
+        cuotas_ids: cuotas.map((_, index) => index).join(','),
+        timestamp: Date.now()
+      }
     };
     
-    console.log('Draft Order simulado:', draftOrder);
+    console.log('Preferencia de pago creada:', preference);
     
-    // Simular completado de orden con un enlace funcional
-    // En lugar de intentar redirigir a Shopify directamente (lo que requiere una tienda configurada),
-    // usaremos un enlace simulado a PaymentSuccessPage para pruebas
-    const completedOrder = {
-      id: draftOrderId,
-      status: "completed",
-      invoice_url: `${req.protocol}://${req.get('host')}/payment-success?order=${draftOrderId}&timestamp=${Date.now()}`
-    };
+    // Generar el enlace de pago usando nuestro simulador
+    const response = await mercadoPagoImplementation.preferences.create(preference);
     
-    console.log('Order completado, enlace generado:', completedOrder.invoice_url);
+    console.log('Respuesta de Mercado Pago (simulada):', response.body);
     
     // Devolver el enlace de pago al cliente
-    res.json({ paymentLink: completedOrder.invoice_url });
+    res.json({ 
+      paymentLink: response.body.init_point,
+      preferenceId: response.body.id
+    });
   } catch (error) {
     console.error('Error al generar enlace de pago:', error);
-    res.status(500).json({ error: 'Error al generar el enlace de pago', details: error.message });
+    res.status(500).json({ 
+      error: 'Error al generar el enlace de pago', 
+      details: error.message 
+    });
   }
+});
+
+// Rutas para manejar redirecciones de pago
+app.get('/payment-success', (req, res) => {
+  // Aquí puedes manejar la redirección después de un pago exitoso
+  res.redirect('/payment-success?status=approved');
+});
+
+app.get('/payment-failure', (req, res) => {
+  // Aquí puedes manejar la redirección después de un pago fallido
+  res.redirect('/payment-failure?status=rejected');
+});
+
+app.get('/payment-pending', (req, res) => {
+  // Aquí puedes manejar la redirección después de un pago pendiente
+  res.redirect('/payment-pending?status=pending');
 });
 
 // Iniciar el servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Servidor de integración Shopify ejecutándose en el puerto ${PORT}`);
+  console.log(`Servidor de integración Mercado Pago ejecutándose en el puerto ${PORT}`);
 });
 
 // Exportar app para testing o integración con otros servicios

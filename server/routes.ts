@@ -65,22 +65,28 @@ function generateId(): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Importar el servidor de Shopify
-  let shopifyHandler;
+  // Importar el servidor de Mercado Pago
+  let mercadoPagoHandler;
   
   try {
-    // Intentar importar el servidor de Shopify dinámicamente
-    const shopifyModule = await import('../server.js');
-    shopifyHandler = shopifyModule.default;
-    console.log("✅ Servidor de Shopify importado correctamente");
+    // Intentar importar el servidor de Mercado Pago dinámicamente
+    const mercadoPagoModule = await import('../server.js');
+    mercadoPagoHandler = mercadoPagoModule.default;
+    console.log("✅ Servidor de Mercado Pago importado correctamente");
   } catch (error) {
-    console.error("❌ Error al importar el servidor de Shopify:", error);
+    console.error("❌ Error al importar el servidor de Mercado Pago:", error);
   }
   
-  // Endpoint para generar enlaces de pago con Shopify
+  // Endpoint para generar enlaces de pago con Mercado Pago
   app.post("/generar-enlace", async (req: Request, res: Response) => {
     console.log("🔄 Solicitud de generación de enlace de pago recibida:", req.body);
     
+    // Redireccionar la solicitud al handler de Mercado Pago
+    if (mercadoPagoHandler) {
+      return mercadoPagoHandler(req, res);
+    }
+    
+    // Si no se pudo cargar el handler, proporcionar una respuesta de fallback
     try {
       const { cuotas } = req.body;
       
@@ -88,16 +94,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No se proporcionaron cuotas válidas' });
       }
 
-      // Simular una respuesta mientras se configura Shopify completamente
-      console.log("✅ Generando respuesta de enlace de pago (simulado)");
+      console.log("⚠️ Usando respuesta simulada (fallback)");
       
-      // Generar un enlace simulado para pruebas 
-      // En producción, esto se reemplazará con la respuesta real de Shopify
-      const paymentLink = `https://checkout.shopify.com/c/${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+      // Generar un enlace simulado para pruebas como fallback
+      const paymentLink = `${req.protocol}://${req.get('host')}/payment-success?fallback=true&timestamp=${Date.now()}`;
       
       res.json({ paymentLink });
-    } catch (error) {
-      console.error("❌ Error al generar enlace de pago:", error);
+    } catch (error: any) {
+      console.error("❌ Error al generar enlace de pago fallback:", error);
       res.status(500).json({ error: 'Error al generar el enlace de pago', details: error.message });
     }
   });
