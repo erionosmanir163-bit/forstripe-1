@@ -63,19 +63,36 @@ export async function createMercadoPagoPreference(options) {
     
     // Realizamos la llamada directa a la API
     console.log('📡 Enviando solicitud a la API de Mercado Pago...');
-    const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(preferenceData)
-    });
+    console.log('📡 URL: https://api.mercadopago.com/checkout/preferences');
+    console.log('📡 Token utilizado (primeros 10 caracteres + longitud): ', 
+        accessToken.substring(0, 10) + '... [longitud total: ' + accessToken.length + ']');
+    console.log('📡 Datos enviados: ', JSON.stringify(preferenceData, null, 2));
     
-    // Obtenemos la respuesta completa en texto
-    const responseText = await response.text();
-    console.log('🔍 Respuesta completa de la API:', responseText);
+    let response;
+    let responseText;
+    
+    try {
+      response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(preferenceData)
+      });
+      
+      // Mostramos información sobre la respuesta HTTP
+      console.log('🔍 Código de estado HTTP:', response.status);
+      console.log('🔍 Headers de respuesta:', [...response.headers.entries()]);
+      
+      // Obtenemos la respuesta completa en texto
+      responseText = await response.text();
+      console.log('🔍 Respuesta completa de la API:', responseText);
+    } catch (fetchError) {
+      console.error('❌ Error durante la llamada fetch:', fetchError);
+      throw fetchError;
+    }
     
     // Si no es un formato JSON válido, fallamos
     let responseData;
