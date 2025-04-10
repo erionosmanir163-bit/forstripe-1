@@ -536,7 +536,7 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
           description: `Contrato ${quota.contractNumber}`,
           quantity: 1,
           unit_price: unitPrice,
-          currency_id: 'CLP'  // Pesos chilenos
+          currency_id: 'ARS'  // Usando peso argentino que es ampliamente soportado por Mercado Pago
         };
         
         console.log(`📦 Objeto de cuota procesado:`, cuotaObj);
