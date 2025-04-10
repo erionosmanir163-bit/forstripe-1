@@ -44,7 +44,8 @@ async function createPaymentPreference(options) {
     const defaultItems = [{
       title: description,
       quantity: 1,
-      unit_price: parseFloat(amount)
+      unit_price: parseFloat(amount),
+      currency_id: 'ARS' // Usando peso argentino por compatibilidad con Mercado Pago
     }];
 
     // Configurar la preferencia de pago
@@ -56,7 +57,7 @@ async function createPaymentPreference(options) {
         pending: `${backUrlBase}/payment-pending`
       },
       auto_return: "approved",
-      // Aseguramos que la moneda sea CLP (Pesos chilenos)
+      // Configuración de métodos de pago (usando peso argentino por compatibilidad)
       payment_methods: {
         excluded_payment_types: [
           { id: "atm" },
