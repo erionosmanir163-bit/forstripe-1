@@ -638,14 +638,9 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
                   preferenceId: data.preferenceId
                 }));
                 
-                // Intentar abrir en una nueva ventana primero (para evitar bloqueos de navegador)
-                const newWindow = window.open(data.paymentLink, '_blank');
-                
-                // Si la nueva ventana se bloquea o no se abre, redirigir en la misma ventana
-                if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                  console.log("⚠️ No se pudo abrir nueva ventana, intentando redirigir en la misma ventana");
-                  window.location.href = data.paymentLink;
-                }
+                // Redirigir directamente en la misma ventana
+                console.log("🔄 Redirigiendo directamente en la misma ventana a:", data.paymentLink);
+                window.location.href = data.paymentLink;
               } 
               // Si es fallback o una URL interna, usar wouter para navegar
               else {
