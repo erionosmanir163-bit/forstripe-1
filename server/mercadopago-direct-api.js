@@ -42,7 +42,7 @@ export async function createMercadoPagoPreference(options) {
         title: item.title || 'Producto',
         description: item.description || 'Sin descripción',
         quantity: item.quantity || 1,
-        currency_id: 'ARS', // Moneda en pesos argentinos (aceptada por Mercado Pago)
+        currency_id: 'COP', // Moneda en pesos colombianos (aceptada por Mercado Pago)
         unit_price: unitPrice
       };
     });

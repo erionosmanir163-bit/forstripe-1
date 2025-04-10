@@ -45,7 +45,7 @@ async function createPaymentPreference(options) {
       title: description,
       quantity: 1,
       unit_price: parseFloat(amount),
-      currency_id: 'ARS' // Usando peso argentino por compatibilidad con Mercado Pago
+      currency_id: 'COP' // Usando peso colombiano por compatibilidad con Mercado Pago
     }];
 
     // Configurar la preferencia de pago
@@ -57,7 +57,7 @@ async function createPaymentPreference(options) {
         pending: `${backUrlBase}/payment-pending`
       },
       auto_return: "approved",
-      // Configuración de métodos de pago (usando peso argentino por compatibilidad)
+      // Configuración de métodos de pago (usando peso colombiano por compatibilidad)
       payment_methods: {
         excluded_payment_types: [
           { id: "atm" },
