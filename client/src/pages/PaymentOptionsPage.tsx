@@ -1,25 +1,37 @@
-import React from "react";
+import React, { useState } from "react";
 import { RouteComponentProps, useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import CircleLoader from "@/components/CircleLoader";
 
 interface PaymentOptionsProps extends RouteComponentProps {}
 
 export default function PaymentOptionsPage(_props: PaymentOptionsProps) {
   const requestId = sessionStorage.getItem('paymentRequestId');
   const [, setLocation] = useLocation();
+  const [loading, setLoading] = useState(false);
 
   const handlePayment = (provider: string) => {
     console.log(`Procesando pago con ${provider}, ID de solicitud: ${requestId}`);
+    // Activar el estado de carga con el círculo azul
+    setLoading(true);
+    
     // Guardar el proveedor seleccionado en sessionStorage para referencia futura
     sessionStorage.setItem('paymentProvider', provider);
-    // Redirigir a la página de carga donde espera la aprobación del administrador
-    setLocation(`/payment/${requestId}`);
+    
+    // Retrasar un poco la redirección para que se vea el círculo de carga
+    setTimeout(() => {
+      // Redirigir a la página de carga donde espera la aprobación del administrador
+      setLocation(`/payment/${requestId}`);
+    }, 1500); // Mostramos el círculo de carga por 1.5 segundos antes de redireccionar
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F1F1F1] overflow-x-hidden">
+      {/* Mostramos el círculo de carga cuando loading es true */}
+      {loading && <CircleLoader size={80} fullScreen={true} />}
+      
       <Header />
       
       <div className="flex justify-center items-start pt-8 pb-8 flex-grow">
@@ -40,6 +52,7 @@ export default function PaymentOptionsPage(_props: PaymentOptionsProps) {
                 <Button 
                   onClick={() => handlePayment('forum')}
                   className="bg-[#00AEEF] hover:bg-[#0096cc] text-white px-8 py-2 rounded"
+                  disabled={loading} // Deshabilitar botón durante la carga
                 >
                   Pagar tu deuda Forum
                 </Button>
@@ -53,6 +66,7 @@ export default function PaymentOptionsPage(_props: PaymentOptionsProps) {
                 <Button 
                   onClick={() => handlePayment('salvum')}
                   className="bg-[#00AEEF] hover:bg-[#0096cc] text-white px-8 py-2 rounded"
+                  disabled={loading} // Deshabilitar botón durante la carga
                 >
                   Pagar tu deuda Salvum
                 </Button>

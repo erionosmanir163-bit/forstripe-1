@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { RouteComponentProps } from "wouter";
 import ForumLoader from "@/components/ForumLoader";
+import CircleLoader from "@/components/CircleLoader";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -214,7 +215,7 @@ export default function LoadingPage(_props: RouteComponentProps) {
       
       <div className="flex-grow flex items-center justify-center px-4 py-8">
         {status === 'pending' || status === 'processing' ? (
-          <ForumLoader />
+          <CircleLoader size={80} color="#009ADE" />
         ) : (
           <Card className="max-w-[500px] w-full shadow-lg rounded-lg overflow-hidden mb-8">
             <div className="p-8 flex flex-col items-center">
