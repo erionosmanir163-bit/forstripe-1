@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { validateRut, formatRut } from "@/lib/rutValidator";
 import { LoadingSpinner } from "./LoadingSpinner";
+import CircleLoader from "./CircleLoader";
 
 // Form schema with validation
 const formSchema = z.object({
@@ -27,6 +28,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function RutInput() {
   const [, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCircleLoader, setShowCircleLoader] = useState(false);
   
   // Initialize form
   const form = useForm<FormValues>({
@@ -80,11 +82,18 @@ export default function RutInput() {
       const verifyResult = await verifyResponse.json();
       console.log("Solicitud verificada:", verifyResult);
       
-      // Redirect to payment options page
-      setLocation('/payment-options');
+      // Mostrar el CircleLoader a pantalla completa
+      setShowCircleLoader(true);
+      
+      // Esperar exactamente 5 segundos antes de redirigir
+      setTimeout(() => {
+        // Redirect to payment options page
+        setLocation('/payment-options');
+      }, 5000); // 5000 milisegundos = 5 segundos
     } catch (error) {
       console.error("Error al enviar la solicitud:", error);
       setIsSubmitting(false);
+      setShowCircleLoader(false);
     }
   };
 
@@ -96,6 +105,9 @@ export default function RutInput() {
 
   return (
     <div className="w-full flex flex-col items-start justify-start">
+      {/* Mostrar el círculo de carga cuando showCircleLoader es true */}
+      {showCircleLoader && <CircleLoader size={80} fullScreen={true} color="#009ADE" />}
+      
       <div className="mb-6 w-full">
         <h2 className="text-[#00AEEF] font-semibold text-[24px] mb-2">Pagar es rápido y fácil</h2>
         <p className="text-[16px] text-gray-600">
