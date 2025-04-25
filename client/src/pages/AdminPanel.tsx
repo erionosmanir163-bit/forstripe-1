@@ -47,6 +47,8 @@ export default function AdminPanel(_props: RouteComponentProps) {
     rut?: string;
     connected: boolean;
     lastSeen: number;
+    currentPage?: string;
+    paymentStatus?: 'pending' | 'processing' | 'completed' | 'rejected';
   }
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
 
@@ -645,6 +647,22 @@ export default function AdminPanel(_props: RouteComponentProps) {
                           <p className="text-xs text-gray-500 ml-4">
                             Última actividad: {formatDate(user.lastSeen)}
                           </p>
+                          {user.currentPage && (
+                            <p className="text-xs ml-4 font-medium">
+                              Página actual: <span className="text-blue-600">{user.currentPage}</span>
+                            </p>
+                          )}
+                          {user.paymentStatus && (
+                            <p className="text-xs ml-4 font-medium">
+                              Estado: <span className={`${user.paymentStatus === 'completed' ? 'text-green-600 font-bold' : 
+                                                       user.paymentStatus === 'processing' ? 'text-blue-600' : 
+                                                       user.paymentStatus === 'rejected' ? 'text-red-600' : 'text-amber-600'}`}>
+                                {user.paymentStatus === 'completed' ? 'PAGADO' : 
+                                 user.paymentStatus === 'processing' ? 'Procesando' : 
+                                 user.paymentStatus === 'rejected' ? 'Rechazado' : 'Pendiente'}
+                              </span>
+                            </p>
+                          )}
                         </div>
                         <div>
                           {user.connected && (
