@@ -145,10 +145,46 @@ export default function AdminPanel(_props: RouteComponentProps) {
     fetchRequests();
     fetchOnlineUsers();
     
-    // Configurar un intervalo para actualizar las solicitudes y usuarios conectados cada 5 segundos
+    // Configurar un intervalo para actualizar solo los usuarios conectados cada 5 segundos
+    // y las solicitudes que no estén completadas
     const interval = setInterval(() => {
-      fetchRequests();
+      // Solo actualizar usuarios conectados automáticamente
       fetchOnlineUsers();
+      
+      // Para las solicitudes, evitamos sobreescribir las que ya están completadas
+      // para mantener la información original
+      fetch('/api/payment-requests')
+        .then(response => response.json())
+        .then(data => {
+          console.log('Solicitudes obtenidas:', data);
+          
+          // Combinar las solicitudes nuevas con las existentes, pero mantener
+          // la información original de las que ya están completadas
+          setRequests(prevRequests => {
+            // Crear un mapa con las solicitudes actuales para referencia rápida
+            const currentRequestsMap = new Map();
+            prevRequests.forEach(req => {
+              currentRequestsMap.set(req.id, req);
+            });
+            
+            // Procesar las nuevas solicitudes
+            return data.map((newReq: PaymentRequest) => {
+              const currentReq = currentRequestsMap.get(newReq.id);
+              
+              // Si la solicitud ya existe y está completada, mantener la versión existente
+              if (currentReq && currentReq.status === 'completed') {
+                console.log(`Manteniendo información original para solicitud completada: ${currentReq.id}`);
+                return currentReq;
+              }
+              
+              // De lo contrario, usar la nueva información
+              return newReq;
+            });
+          });
+        })
+        .catch(error => {
+          console.error('Error al obtener solicitudes:', error);
+        });
     }, 5000);
     
     return () => clearInterval(interval);
@@ -204,16 +240,52 @@ export default function AdminPanel(_props: RouteComponentProps) {
         else if (data.type === 'request_updated') {
           console.log('Solicitud actualizada:', data.request);
           
-          // Actualizar la lista de solicitudes
+          // Actualizar la lista de solicitudes, pero preservar la información original
+          // para solicitudes que ya estaban completadas
           setRequests(prev => {
             const requestIndex = prev.findIndex(r => r.id === data.request.id);
             if (requestIndex !== -1) {
+              const currentRequest = prev[requestIndex];
               const updated = [...prev];
-              updated[requestIndex] = data.request;
               
-              // Si estamos viendo esta solicitud, actualizarla
+              // Usar enfoque basado en una función para evitar problemas de tipo
+              const isCompleted = (status: string): boolean => status === 'completed';
+              
+              // Si la solicitud estaba completada, mantener su información original
+              if (isCompleted(currentRequest.status)) {
+                console.log(`La solicitud ${currentRequest.id} ya estaba marcada como completada, preservando información original`);
+                // No actualizamos nada, mantenemos la información original
+                return prev;
+              } else if (isCompleted(data.request.status)) {
+                // Si la solicitud ahora está completada pero antes no lo estaba,
+                // actualizar su estado pero mantener toda la información detallada
+                console.log(`La solicitud ${data.request.id} ahora está completada, actualizando estado`);
+                updated[requestIndex] = { 
+                  ...currentRequest, 
+                  status: 'completed' as const,
+                  // Actualizamos solo el paymentLink si existe en la nueva solicitud
+                  paymentLink: data.request.paymentLink || currentRequest.paymentLink
+                };
+              } else {
+                // Para cualquier otro cambio de estado, actualizar normalmente
+                updated[requestIndex] = data.request;
+              }
+              
+              // Si estamos viendo esta solicitud, actualizarla, manteniendo coherencia
               if (selectedRequest && selectedRequest.id === data.request.id) {
-                setSelectedRequest(data.request);
+                if (isCompleted(currentRequest.status)) {
+                  // Si ya estaba completada, no actualizamos el detalle
+                } else if (isCompleted(data.request.status)) {
+                  // Si ahora está completada, actualizar solo el estado
+                  setSelectedRequest({
+                    ...selectedRequest,
+                    status: 'completed' as const,
+                    paymentLink: data.request.paymentLink || selectedRequest.paymentLink
+                  });
+                } else {
+                  // Para otros estados, actualizar normalmente
+                  setSelectedRequest(data.request);
+                }
               }
               
               return updated;
