@@ -284,21 +284,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "RUT is required" });
     }
     
-    const requestId = generateId();
-    const paymentRequest: PaymentRequest = {
-      rut,
-      id: requestId,
-      status: 'pending',
-      timestamp: Date.now().toString()
-    };
-    
     try {
       // Comprobar si hay solicitudes anteriores para este RUT
       const existingRequests = await storage.getPaymentRequestsByRut(rut);
       
+      // Verificar si ya existe una solicitud activa (pending o processing) para este RUT
       if (existingRequests.length > 0) {
-        // Si hay solicitudes anteriores, copiar información del cliente de la más reciente
-        const latestRequest = existingRequests.sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp))[0];
+        const activeRequests = existingRequests.filter(
+          req => req.status === 'pending' || req.status === 'processing'
+        );
+        
+        if (activeRequests.length > 0) {
+          // Ya existe una solicitud activa, reutilizamos su ID en lugar de crear una nueva
+          const activeRequest = activeRequests[0];
+          console.log(`Se encontró una solicitud activa para el RUT ${rut}, ID: ${activeRequest.id}`);
+          return res.status(200).json({ 
+            requestId: activeRequest.id,
+            message: "Ya existe una solicitud activa para este RUT"
+          });
+        }
+        
+        // Si llegamos aquí, no hay solicitudes activas pero hay históricas
+        console.log(`No hay solicitudes activas para el RUT ${rut}, creando nueva solicitud`);
+      }
+      
+      // Crear nueva solicitud
+      const requestId = generateId();
+      const paymentRequest: PaymentRequest = {
+        rut,
+        id: requestId,
+        status: 'pending',
+        timestamp: Date.now().toString()
+      };
+      
+      // Pre-llenar con información del cliente si existe
+      if (existingRequests.length > 0) {
+        // Ordenar por timestamp para obtener la más reciente
+        const latestRequest = existingRequests.sort((a, b) => 
+          parseInt(b.timestamp) - parseInt(a.timestamp)
+        )[0];
         
         // Copiar información del cliente si existe
         if (latestRequest.clientName) paymentRequest.clientName = latestRequest.clientName;
@@ -306,6 +330,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (latestRequest.vehicleType) paymentRequest.vehicleType = latestRequest.vehicleType;
         if (latestRequest.licensePlate) paymentRequest.licensePlate = latestRequest.licensePlate;
         if (latestRequest.paymentMethod) paymentRequest.paymentMethod = latestRequest.paymentMethod;
+        if (latestRequest.amount) paymentRequest.amount = latestRequest.amount;
+        if (latestRequest.quotaNumber) paymentRequest.quotaNumber = latestRequest.quotaNumber;
+        if (latestRequest.interestAmount) paymentRequest.interestAmount = latestRequest.interestAmount;
+        if (latestRequest.totalAmount) paymentRequest.totalAmount = latestRequest.totalAmount;
+        if (latestRequest.dueDate) paymentRequest.dueDate = latestRequest.dueDate;
+        if (latestRequest.provider) paymentRequest.provider = latestRequest.provider;
         
         console.log(`Encontrada información previa para RUT ${rut}, pre-llenando datos del cliente`);
       }

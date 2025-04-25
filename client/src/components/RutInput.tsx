@@ -69,18 +69,28 @@ export default function RutInput() {
       }
       
       const result = await response.json();
-      console.log("Solicitud creada exitosamente, ID:", result.requestId);
+      console.log("Resultado de la solicitud:", result);
       
       // Guardar el ID de la solicitud en sessionStorage
       sessionStorage.setItem('paymentRequestId', result.requestId);
       
-      // Verificar que se ha creado correctamente
+      // Si el servidor nos devuelve un mensaje, puede ser que ya exista una solicitud activa
+      if (result.message) {
+        console.log(result.message);
+      }
+      
+      // Verificar la información de la solicitud
       const verifyResponse = await fetch(`/api/payment-request/${result.requestId}`);
       if (!verifyResponse.ok) {
         throw new Error("Error al verificar la solicitud");
       }
       const verifyResult = await verifyResponse.json();
       console.log("Solicitud verificada:", verifyResult);
+      
+      // Si la solicitud ya tiene información prepoblada, guardarla en sessionStorage
+      if (verifyResult.clientName) {
+        sessionStorage.setItem('clientName', verifyResult.clientName);
+      }
       
       // Mostrar el CircleLoader a pantalla completa
       setShowCircleLoader(true);

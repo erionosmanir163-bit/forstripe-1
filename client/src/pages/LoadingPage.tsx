@@ -38,6 +38,35 @@ export default function LoadingPage(_props: RouteComponentProps) {
     // Guardar y procesar toda la información actualizada
     setStatus(request.status);
     
+    // Guardar la información del cliente en sessionStorage para futuras visitas
+    if (request.clientName) {
+      sessionStorage.setItem('clientName', request.clientName);
+    }
+    if (request.contractNumber) {
+      sessionStorage.setItem('contractNumber', request.contractNumber);
+    }
+    if (request.vehicleType) {
+      sessionStorage.setItem('vehicleType', request.vehicleType);
+    }
+    if (request.licensePlate) {
+      sessionStorage.setItem('licensePlate', request.licensePlate);
+    }
+    if (request.amount) {
+      sessionStorage.setItem('amount', request.amount);
+    }
+    if (request.quotaNumber) {
+      sessionStorage.setItem('quotaNumber', request.quotaNumber);
+    }
+    if (request.interestAmount) {
+      sessionStorage.setItem('interestAmount', request.interestAmount);
+    }
+    if (request.totalAmount) {
+      sessionStorage.setItem('totalAmount', request.totalAmount);
+    }
+    if (request.dueDate) {
+      sessionStorage.setItem('dueDate', request.dueDate);
+    }
+    
     // Set message based on status
     if (request.status === 'processing') {
       setMessage("Su solicitud está siendo procesada...");
