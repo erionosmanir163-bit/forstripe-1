@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { RouteComponentProps } from "wouter";
-import { playNotificationSound } from '../../../public/sounds/notification';
+import { playNotificationSound, initNotificationSound } from '../../../public/sounds/notification';
 import { Notification } from "@/components/ui/notification";
 
 interface PaymentRequest {
@@ -170,6 +170,13 @@ export default function AdminPanel(_props: RouteComponentProps) {
   useEffect(() => {
     fetchRequests();
     fetchOnlineUsers();
+    
+    // Inicializar el sistema de sonido
+    initNotificationSound();
+    console.log('Sistema de sonido inicializado');
+    
+    // Mostrar notificación para que el usuario interactúe y se desbloquee el audio
+    addNotification('Haz clic en esta notificación para activar los sonidos de alerta', 'info');
     
     // Configurar un intervalo para actualizar solo los usuarios conectados cada 5 segundos
     // y las solicitudes que no estén completadas
@@ -651,11 +658,23 @@ export default function AdminPanel(_props: RouteComponentProps) {
             </div>
             <div className="flex items-center space-x-4">
               <div className="bg-white shadow rounded-lg p-2">
-                <div className="flex items-center">
-                  <span className="inline-flex h-3 w-3 rounded-full bg-green-500 mr-2"></span>
-                  <span className="text-sm font-medium">
-                    {onlineUsers.filter(u => u.connected).length} usuarios en línea
-                  </span>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center">
+                    <span className="inline-flex h-3 w-3 rounded-full bg-green-500 mr-2"></span>
+                    <span className="text-sm font-medium">
+                      {onlineUsers.filter(u => u.connected).length} usuarios en línea
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      playNotificationSound();
+                      addNotification("Prueba de sonido exitosa", "success");
+                    }}
+                    className="px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded"
+                    title="Probar sonido de notificación"
+                  >
+                    🔊 Probar sonido
+                  </button>
                 </div>
               </div>
               <Button 
