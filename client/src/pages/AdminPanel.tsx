@@ -424,7 +424,7 @@ export default function AdminPanel(_props: RouteComponentProps) {
     return new Date(timestamp).toLocaleString('es-ES');
   };
   
-  // Función para analizar el texto completo
+  // Función mejorada para analizar el texto completo
   const parseFullInfoText = (text: string) => {
     console.log("Analizando texto completo:", text);
     
@@ -445,95 +445,115 @@ export default function AdminPanel(_props: RouteComponentProps) {
     // Dividir el texto en líneas para procesarlo
     const lines = text.split('\n');
     
-    // Extraer información del cliente (primera línea)
-    if (lines.length > 0) {
-      setClientName(lines[0].trim());
-    }
-    
-    // Buscar RUT en cualquier línea
-    for (const line of lines) {
-      // Buscar patrones de RUT como "17.546.765-3"
-      if (line.match(/\d{1,2}\.\d{3}\.\d{3}-[\dkK]/)) {
-        setClientRut(line.trim());
+    // PASO 1: SIEMPRE OBTENER EL NOMBRE (primera línea no vacía)
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line && !line.match(/^\d/) && !line.includes('$') && !line.includes('Contrato')) {
+        setClientName(line);
         break;
       }
     }
     
-    // Buscar contrato, patente, vehículo
+    // PASO 2: SIEMPRE OBTENER EL RUT (formato chileno XX.XXX.XXX-X)
+    const rutPattern = /\d{1,2}\.\d{3}\.\d{3}-[\dkK]/;
+    for (const line of lines) {
+      const rutMatch = line.match(rutPattern);
+      if (rutMatch) {
+        setClientRut(rutMatch[0]);
+        break;
+      }
+    }
+    
+    // PASO 3: OBTENER EL CONTRATO (después de la palabra "Contrato" o si es alfanumérico específico)
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
+      const line = lines[i].trim();
       
-      // Buscar contrato
-      if (line.includes('Contrato') && i+1 < lines.length) {
-        const contractLine = lines[i+1];
-        const contractNumber = contractLine.trim();
-        if (/^\d+$/.test(contractNumber)) {
-          setContractNumber(contractNumber);
+      // Si la línea contiene exactamente "Contrato", buscar en la siguiente línea
+      if (line === 'Contrato' && i+1 < lines.length) {
+        const contractLine = lines[i+1].trim();
+        if (contractLine) {
+          setContractNumber(contractLine);
+          break;
         }
       }
       
-      // Buscar patente
-      if (line.includes('Patente') && i+1 < lines.length) {
-        setLicensePlate(lines[i+1].trim());
+      // O si la línea tiene formato LBxxxxxx (formato típico de contratos)
+      const contractMatch = line.match(/[A-Z]{2}\d{6,}/);
+      if (contractMatch) {
+        setContractNumber(contractMatch[0]);
+        break;
       }
-      
-      // Buscar vehículo
-      if (line.includes('Vehículo') && i+1 < lines.length) {
-        setVehicleType(lines[i+1].trim());
-      }
-      
-      // Buscar PAC/PAT
-      if (line.includes('PAC/PAT')) {
-        const parts = line.split('PAC/PAT');
-        if (parts.length > 1) {
-          setPaymentMethod('PAC/PAT ' + parts[1].trim());
-        }
-      }
-      
-      // Buscar número de cuota
-      if (line.includes('Cuota N°')) {
-        const quotaMatch = line.match(/Cuota N°(\d+)/);
-        if (quotaMatch && quotaMatch[1]) {
-          setQuotaNumber(quotaMatch[1]);
-        }
-      }
-      
-      // Buscar montos ($)
-      if (line.includes('$') && !line.includes('$0') && i > 0) {
-        if (lines[i-1].includes('Cuota')) {
-          const amountMatch = line.match(/\$([0-9.,]+)/);
-          if (amountMatch && amountMatch[1]) {
-            setAmount(amountMatch[1]);
-          }
-        }
-        
-        if (lines[i-1].includes('Total Cuota')) {
-          const totalMatch = line.match(/\$([0-9.,]+)/);
-          if (totalMatch && totalMatch[1]) {
-            setTotalAmount(totalMatch[1]);
-          }
-        }
-      }
-      
-      // Buscar interés
-      if (line.includes('$0')) {
-        setInterestAmount('0');
-      }
-      
-      // Buscar fecha de vencimiento
-      if (line.includes('Vence en')) {
-        const daysMatch = line.match(/Vence en (\d+) días/);
-        if (daysMatch && daysMatch[1]) {
-          const daysToExpire = parseInt(daysMatch[1]);
-          const dueDate = new Date();
-          dueDate.setDate(dueDate.getDate() + daysToExpire);
-          setDueDate(dueDate.toLocaleDateString('es-ES'));
+    }
+    
+    // PASO 4: SIEMPRE OBTENER EL MONTO (cualquier número con $)
+    let foundAmount = false;
+    for (const line of lines) {
+      // Buscar cualquier formato de dinero ($X.XXX.XXX)
+      const amountMatch = line.match(/\$\s*([0-9.,]+)/);
+      if (amountMatch && amountMatch[1]) {
+        if (!foundAmount) {
+          setAmount(amountMatch[1]);
+          setTotalAmount(amountMatch[1]); // Usar el mismo valor para total por defecto
+          foundAmount = true;
+          break;
         }
       }
     }
     
-    // Generar enlace de pago por defecto (ejemplo)
+    // EXTRAS: Solo si están disponibles
+    
+    // Buscar patente
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line.includes('Patente') && i+1 < lines.length) {
+        setLicensePlate(lines[i+1].trim());
+        break;
+      }
+      
+      // Patrón típico de patente chilena XX-XX-XX o XXXX-XX
+      const patenteMatch = line.match(/[A-Z]{2,4}[-\s]?[0-9A-Z]{2}[-\s]?[0-9A-Z]{2}/);
+      if (patenteMatch) {
+        setLicensePlate(patenteMatch[0]);
+        break;
+      }
+    }
+    
+    // Buscar vehículo
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim().toLowerCase();
+      if (line.includes('vehículo') && i+1 < lines.length) {
+        setVehicleType(lines[i+1].trim());
+        break;
+      }
+      
+      // Marcas comunes de vehículos
+      const marcasVehiculos = ['toyota', 'nissan', 'chevrolet', 'hyundai', 'kia', 'mazda', 'ford'];
+      for (const marca of marcasVehiculos) {
+        if (line.includes(marca)) {
+          setVehicleType(line);
+          break;
+        }
+      }
+    }
+    
+    // Buscar número de cuota
+    for (const line of lines) {
+      const quotaMatch = line.match(/Cuota\s*N[°º]?\s*(\d+)/i);
+      if (quotaMatch && quotaMatch[1]) {
+        setQuotaNumber(quotaMatch[1]);
+        break;
+      }
+    }
+    
+    // Generar enlace de pago por defecto
     setPaymentLink(`https://pago.ejemplo.cl/${contractNumber || '000000'}`);
+    
+    console.log("✅ Datos extraídos correctamente:", {
+      clientName: clientName || "(Sin nombre)",
+      clientRut: clientRut || "(Sin RUT)",
+      contractNumber: contractNumber || "(Sin contrato)",
+      amount: amount || "(Sin monto)"
+    });
     
     // Generar respuesta automática en un formato estructurado simple para fácil extracción
     setResponse(`Estimado/a ${clientName || 'Cliente'} ${clientRut || '12.345.678-9'}\n\n` +
@@ -702,9 +722,7 @@ export default function AdminPanel(_props: RouteComponentProps) {
   
   return (
     <div className="min-h-screen bg-gray-100 p-4">
-      {/* Elementos de audio ocultos */}
-      <audio ref={newUserAudioRef} src="/sounds/squirtle.mp3" preload="auto" />
-      <audio ref={completedPaymentAudioRef} src="/sounds/notification.mp3" preload="auto" />
+      {/* Los elementos de audio se manejan desde play-sound.js */}
       
       {/* Contenedor de notificaciones */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
