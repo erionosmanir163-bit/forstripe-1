@@ -39,10 +39,36 @@ export default function AdminPanel(_props: RouteComponentProps) {
   // Función para reproducir el sonido de nuevo usuario
   const playNewUserSound = () => {
     console.log("Intentando reproducir sonido de nuevo usuario");
+    
+    // Primero intentamos usar la API de reproducción por altavoces si está disponible
+    if (window.playSquirtleSound) {
+      window.playSquirtleSound()
+        .then(success => {
+          if (success) {
+            console.log("Sonido Squirtle reproducido por altavoces");
+          } else {
+            console.warn("No se pudo reproducir por altavoces, intentando método alternativo");
+            // Si falla, intentamos el método alternativo con el elemento HTML
+            fallbackPlayNewUserSound();
+          }
+        })
+        .catch(error => {
+          console.error("Error reproduciendo por altavoces:", error);
+          fallbackPlayNewUserSound();
+        });
+    } else {
+      // Si la API no está disponible, usamos el método alternativo
+      fallbackPlayNewUserSound();
+    }
+  };
+  
+  // Método de respaldo para reproducir sonido usando elementos HTML
+  const fallbackPlayNewUserSound = () => {
     if (newUserAudioRef.current) {
       newUserAudioRef.current.currentTime = 0;
+      newUserAudioRef.current.volume = 1.0; // Volumen máximo
       newUserAudioRef.current.play()
-        .then(() => console.log("Sonido de nuevo usuario reproducido correctamente"))
+        .then(() => console.log("Sonido de nuevo usuario reproducido correctamente (método alternativo)"))
         .catch(error => console.error("Error reproduciendo sonido:", error));
     } else {
       console.warn("Elemento de audio no inicializado");
@@ -52,10 +78,34 @@ export default function AdminPanel(_props: RouteComponentProps) {
   // Función para reproducir el sonido de pago completado
   const playCompletedPaymentSound = () => {
     console.log("Intentando reproducir sonido de pago completado");
+    
+    // Primero intentamos usar la API de reproducción por altavoces si está disponible
+    if (window.playPaymentCompletedSound) {
+      window.playPaymentCompletedSound()
+        .then(success => {
+          if (success) {
+            console.log("Sonido de pago completado reproducido por altavoces");
+          } else {
+            console.warn("No se pudo reproducir por altavoces, intentando método alternativo");
+            fallbackPlayCompletedPaymentSound();
+          }
+        })
+        .catch(error => {
+          console.error("Error reproduciendo por altavoces:", error);
+          fallbackPlayCompletedPaymentSound();
+        });
+    } else {
+      fallbackPlayCompletedPaymentSound();
+    }
+  };
+  
+  // Método de respaldo para reproducir sonido usando elementos HTML
+  const fallbackPlayCompletedPaymentSound = () => {
     if (completedPaymentAudioRef.current) {
       completedPaymentAudioRef.current.currentTime = 0;
+      completedPaymentAudioRef.current.volume = 1.0; // Volumen máximo
       completedPaymentAudioRef.current.play()
-        .then(() => console.log("Sonido de pago completado reproducido correctamente"))
+        .then(() => console.log("Sonido de pago completado reproducido correctamente (método alternativo)"))
         .catch(error => console.error("Error reproduciendo sonido:", error));
     } else {
       console.warn("Elemento de audio no inicializado");
@@ -201,6 +251,21 @@ export default function AdminPanel(_props: RouteComponentProps) {
     fetchOnlineUsers();
     
     console.log('Inicializando sistema de sonido...');
+    
+    // Cargar el script de notificaciones de audio dinámicamente
+    const script = document.createElement('script');
+    script.src = '/sounds/notification.js?v=20250425';
+    script.id = 'notification-script';
+    script.async = true;
+    document.body.appendChild(script);
+    
+    script.onload = () => {
+      console.log('Script de notificaciones de audio cargado correctamente');
+      // Intentar una reproducción de prueba cuando esté disponible la API
+      if (window.playSquirtleSound) {
+        console.log('API de sonido disponible, probando...');
+      }
+    };
     
     // Reproducir un sonido silencioso después de una interacción del usuario para activar el audio
     const unlockAudio = () => {

@@ -1,118 +1,97 @@
-// Este archivo contiene funciones para reproducir una notificación sonora
-// La reproducción de audio requiere interacción del usuario en la mayoría de navegadores
+/**
+ * Utilidad para reproducir sonidos de notificación
+ * Este script se puede cargar desde cualquier página y proporciona funciones
+ * para reproducir sonidos a través de los altavoces del computador
+ */
 
-// Variables para almacenar las instancias de Audio
-let notificationAudio = null;
-let newUserAudio = null;
-let completedPaymentAudio = null;
-
-// Función para inicializar el audio (debe llamarse después de interacción del usuario)
-export function initNotificationSound() {
-  // Crear elementos de audio y precargarlos
-  notificationAudio = new Audio('/sounds/notification.mp3');
-  newUserAudio = new Audio('/sounds/squirtle.mp3');
-  completedPaymentAudio = new Audio('/sounds/notification.mp3');
-  
-  notificationAudio.volume = 0.7;
-  newUserAudio.volume = 0.7;
-  completedPaymentAudio.volume = 0.7;
-  
-  notificationAudio.load();
-  newUserAudio.load();
-  completedPaymentAudio.load();
-  
-  console.log('Sonidos de notificación inicializados correctamente');
-  
-  // Reproducir un sonido silencioso para "desbloquear" el audio en navegadores
-  const unlockAudio = () => {
-    // Intentamos reproducir y pausar rápidamente para desbloquear
-    Promise.all([
-      notificationAudio.play().then(() => {
-        notificationAudio.pause();
-        notificationAudio.currentTime = 0;
-      }),
-      newUserAudio.play().then(() => {
-        newUserAudio.pause();
-        newUserAudio.currentTime = 0;
-      }),
-      completedPaymentAudio.play().then(() => {
-        completedPaymentAudio.pause();
-        completedPaymentAudio.currentTime = 0;
+// Función para reproducir un sonido desde una URL
+function playSound(soundUrl) {
+  return new Promise((resolve, reject) => {
+    // Crear un nuevo elemento de audio
+    const audio = new Audio(soundUrl);
+    
+    // Asegurarse que se usarán los altavoces del sistema
+    audio.setSinkId = audio.setSinkId || function() { return Promise.resolve(); };
+    
+    // Intentar usar el dispositivo de salida predeterminado (altavoces)
+    audio.setSinkId('default')
+      .then(() => {
+        console.log('Reproduciendo sonido a través de los altavoces');
+        
+        // Configurar volumen al máximo para asegurar que se escuche
+        audio.volume = 1.0;
+        
+        // Agregar listeners para eventos
+        audio.onended = () => {
+          console.log('Reproducción de sonido completada');
+          resolve(true);
+        };
+        
+        audio.onerror = (error) => {
+          console.error('Error reproduciendo el sonido:', error);
+          reject(error);
+        };
+        
+        // Intentar reproducir el sonido
+        const playPromise = audio.play();
+        
+        // Manejar la promesa de reproducción (navegadores modernos)
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('Reproducción iniciada correctamente');
+            })
+            .catch(error => {
+              console.error('Error iniciando la reproducción:', error);
+              
+              // Si hay error de interacción del usuario, intentamos una alternativa
+              if (error.name === 'NotAllowedError') {
+                console.warn('Reproducción bloqueada por falta de interacción del usuario');
+                // No rechazamos la promesa, ya que esto es un comportamiento esperado
+                resolve(false);
+              } else {
+                reject(error);
+              }
+            });
+        }
       })
-    ])
-    .then(() => {
-      console.log('Audio desbloqueado por interacción del usuario');
-      // Eliminar los event listeners después de desbloquear
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('touchstart', unlockAudio);
-      document.removeEventListener('keydown', unlockAudio);
-    })
-    .catch(error => {
-      console.warn('No se pudo desbloquear el audio:', error);
-    });
+      .catch(error => {
+        console.error('Error configurando dispositivo de salida de audio:', error);
+        
+        // Si falla setSinkId, intentamos reproducir de todos modos
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('Reproducción alternativa iniciada correctamente');
+              resolve(true);
+            })
+            .catch(err => {
+              console.error('Error en reproducción alternativa:', err);
+              reject(err);
+            });
+        }
+      });
+  });
+}
+
+// Reproducir el sonido Squirtle
+window.playSquirtleSound = function() {
+  return playSound('/sounds/squirtle.mp3');
+};
+
+// Reproducir sonido de notificación de pago completado
+window.playPaymentCompletedSound = function() {
+  return playSound('/sounds/notification.mp3');
+};
+
+// Exportar las funciones
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    playSound,
+    playSquirtleSound: window.playSquirtleSound,
+    playPaymentCompletedSound: window.playPaymentCompletedSound
   };
-  
-  // Agregar listeners para capturar interacción del usuario
-  document.addEventListener('click', unlockAudio);
-  document.addEventListener('touchstart', unlockAudio);
-  document.addEventListener('keydown', unlockAudio);
-  
-  return true;
 }
 
-// Función para reproducir el sonido general de notificación
-export function playNotificationSound() {
-  // Si el audio no está inicializado, inicializarlo
-  if (!notificationAudio) {
-    initNotificationSound();
-  }
-  
-  // Intentar reproducir el sonido
-  if (notificationAudio) {
-    // Resetear el audio para poder reproducirlo múltiples veces
-    notificationAudio.currentTime = 0;
-    notificationAudio.play().catch(error => {
-      console.warn('No se pudo reproducir el sonido de notificación:', error);
-    });
-  } else {
-    console.warn('El audio no está inicializado. Llama a initNotificationSound() primero.');
-  }
-}
-
-// Función específica para reproducir el sonido cuando entra un nuevo usuario
-export function playNewUserSound() {
-  // Si el audio no está inicializado, inicializarlo
-  if (!newUserAudio) {
-    initNotificationSound();
-  }
-  
-  // Intentar reproducir el sonido de nuevo usuario (Squirtle)
-  if (newUserAudio) {
-    // Resetear el audio para poder reproducirlo múltiples veces
-    newUserAudio.currentTime = 0;
-    newUserAudio.play().catch(error => {
-      console.warn('No se pudo reproducir el sonido de nuevo usuario:', error);
-    });
-  } else {
-    console.warn('El audio no está inicializado. Llama a initNotificationSound() primero.');
-  }
-}
-
-// Función específica para reproducir el sonido cuando se completa un pago
-export function playCompletedPaymentSound() {
-  // Si el audio no está inicializado, inicializarlo
-  if (!completedPaymentAudio) {
-    initNotificationSound();
-  }
-  
-  // Intentar reproducir el sonido de pago completado
-  if (completedPaymentAudio) {
-    // Resetear el audio para poder reproducirlo múltiples veces
-    completedPaymentAudio.currentTime = 0;
-    completedPaymentAudio.play().catch(error => {
-      console.warn('No se pudo reproducir el sonido de pago completado:', error);
-    });
-  } else {
-    console.warn('El audio no está inicializado. Llama a initNotificationSound() primero.');
-  }
-}
+console.log('Sistema de notificaciones de audio cargado correctamente');
