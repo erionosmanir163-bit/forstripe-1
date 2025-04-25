@@ -407,10 +407,71 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
     // Obtener información desde sessionStorage y del API
     const requestId = sessionStorage.getItem('paymentRequestId');
     
+    // Intentar recuperar datos precargados de una sesión anterior
+    const loadCachedData = () => {
+      try {
+        // Verificar si hay datos guardados de la sesión anterior
+        const cachedClientName = sessionStorage.getItem('clientName');
+        const cachedClientRut = sessionStorage.getItem('clientRut');
+        const cachedQuotasStr = sessionStorage.getItem('selectedQuotas');
+        
+        if (cachedClientName && cachedClientRut && cachedQuotasStr) {
+          console.log("🔄 Encontrados datos en caché de sesión anterior");
+          
+          try {
+            // Intentar reconstruir los datos del usuario desde la sesión
+            const cachedQuotas = JSON.parse(cachedQuotasStr);
+            
+            if (Array.isArray(cachedQuotas) && cachedQuotas.length > 0) {
+              // Crear objeto de userData manualmente desde la caché
+              const cachedUserData: UserInfo = {
+                clientName: cachedClientName,
+                clientRut: cachedClientRut,
+                showPacPatSubscription: false,
+                quotas: cachedQuotas
+              };
+              
+              console.log("✅ Datos reconstruidos desde caché:", cachedUserData);
+              setUserData(cachedUserData);
+              
+              // Pre-seleccionar todas las cuotas que estaban seleccionadas antes
+              setSelectedQuotas(cachedQuotas.map((_q, index) => index));
+              
+              return true; // Indica que se cargaron datos desde caché
+            }
+          } catch (e) {
+            console.error("Error al reconstruir datos desde caché:", e);
+          }
+        }
+        
+        return false; // No se encontraron datos en caché o hubo un error
+      } catch (e) {
+        console.error("Error al intentar cargar datos de caché:", e);
+        return false;
+      }
+    };
+    
     const fetchRequestData = async () => {
       if (!requestId) {
         setIsLoading(false);
         return;
+      }
+      
+      // Primero intentar cargar desde caché
+      const cachedDataLoaded = loadCachedData();
+      
+      if (cachedDataLoaded) {
+        console.log("🔍 Usando datos preexistentes de la sesión anterior");
+        setIsLoading(false);
+        
+        // Aún así notificar al servidor sobre el estado del usuario
+        sendJsonMessage({
+          type: 'update_user_status',
+          currentPage: 'checkout',
+          paymentStatus: 'completed'
+        });
+        
+        return; // No necesitamos cargar datos del servidor
       }
       
       try {
@@ -536,6 +597,47 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
     
     // Mostrar loading spinner
     setIsLoading(true);
+    
+    // Verificar si esta solicitud ya está completada
+    const requestId = sessionStorage.getItem('paymentRequestId');
+    const lastPaymentAttempt = sessionStorage.getItem('lastPaymentAttempt');
+    
+    if (requestId && lastPaymentAttempt) {
+      try {
+        // Comprobar si el último intento corresponde a esta solicitud
+        const paymentData = JSON.parse(lastPaymentAttempt);
+        const paymentLink = paymentData.url;
+        
+        // Ver si hay información de pago guardada y si la página ya está marcada como completada
+        const response = await fetch(`/api/payment-request/${requestId}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Si la solicitud ya está marcada como pagada y tenemos el enlace de pago, usarlo directamente
+          if (data.status === 'completed' && paymentLink) {
+            console.log("🔄 Solicitud ya pagada, redirigiendo al enlace de pago anterior:", paymentLink);
+            
+            // Notificar al servidor
+            sendJsonMessage({
+              type: 'update_user_status',
+              currentPage: 'pasarela_pago',
+              paymentStatus: 'completed'
+            });
+            
+            // Redirigir directamente
+            setTimeout(() => {
+              window.location.href = paymentLink;
+            }, 100);
+            
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Error verificando estado de pago previo:", e);
+        // Si hay un error, continuamos con el flujo normal
+      }
+    }
     
     try {
       // Recolectar información de las cuotas seleccionadas
