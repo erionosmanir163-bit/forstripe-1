@@ -13,6 +13,8 @@ export interface IStorage {
   getAllPaymentRequests(): Promise<PaymentRequest[]>;
   createPaymentRequest(request: PaymentRequest): Promise<PaymentRequest>;
   updatePaymentRequest(id: string, request: Partial<PaymentRequest>): Promise<PaymentRequest | undefined>;
+  deletePaymentRequest(id: string): Promise<boolean>;
+  deleteAllPaymentRequests(): Promise<boolean>;
 }
 
 // Interfaces adaptadas para la aplicación

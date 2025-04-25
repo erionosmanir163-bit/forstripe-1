@@ -495,7 +495,7 @@ export default function AdminPanel(_props: RouteComponentProps) {
                 Estado de la conexión: {status === 'open' ? 'Conectado' : status}
               </p>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-4">
               <div className="bg-white shadow rounded-lg p-2">
                 <div className="flex items-center">
                   <span className="inline-flex h-3 w-3 rounded-full bg-green-500 mr-2"></span>
@@ -504,6 +504,47 @@ export default function AdminPanel(_props: RouteComponentProps) {
                   </span>
                 </div>
               </div>
+              <Button 
+                variant="outline" 
+                className="bg-red-100 hover:bg-red-200 text-red-800 border-red-300"
+                onClick={() => {
+                  if (window.confirm('¿Estás seguro de que deseas limpiar todas las solicitudes? Esta acción no se puede deshacer.')) {
+                    // Llamar al API para limpiar el panel
+                    fetch('/api/admin/clean', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      }
+                    })
+                    .then(response => {
+                      if (!response.ok) {
+                        throw new Error('Error al limpiar el panel de administración');
+                      }
+                      return response.json();
+                    })
+                    .then(data => {
+                      console.log('Panel limpiado:', data);
+                      
+                      // Limpiar las solicitudes localmente
+                      setRequests([]);
+                      setSelectedRequest(null);
+                      setOnlineUsers([]);
+                      
+                      // Mostrar mensaje de éxito
+                      alert('Panel de administración limpiado con éxito');
+                      
+                      // Recargar nuevamente los datos (conservará la solicitud de prueba)
+                      fetchRequests();
+                    })
+                    .catch(error => {
+                      console.error('Error:', error);
+                      alert('Hubo un problema al limpiar el panel. Por favor, inténtelo de nuevo.');
+                    });
+                  }
+                }}
+              >
+                Limpiar Panel
+              </Button>
             </div>
           </div>
         </header>

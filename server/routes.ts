@@ -480,6 +480,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // API para limpiar el panel de administración
+  app.post("/api/admin/clean", async (_req: Request, res: Response) => {
+    try {
+      // Obtener todas las solicitudes actuales
+      const allRequests = await storage.getAllPaymentRequests();
+      
+      // Eliminar todas las solicitudes de la base de datos una por una
+      // En una aplicación real, esto podría hacerse con una operación masiva
+      // más eficiente, pero usamos el método existente para simplicidad
+      for (const request of allRequests) {
+        try {
+          // Esta eliminación es simulada y no existente en la interfaz actual,
+          // por lo que creamos un objeto vacío con solo el campo status en "rejected"
+          // para marcar como eliminada la solicitud
+          await storage.updatePaymentRequest(request.id, {
+            status: 'rejected'
+          });
+        } catch (err) {
+          console.error(`Error eliminando solicitud ${request.id}:`, err);
+        }
+      }
+      
+      // Limpiar los clientes conectados (conservar información de conexión pero borrar asociaciones)
+      for (const client of userClients) {
+        client.requestId = undefined;
+        client.rut = undefined;
+      }
+      
+      // Limpiar el caché de solicitudes completamente (incluyendo la solicitud de prueba)
+      paymentRequestsCache.length = 0;
+      
+      // Notificar a todos los administradores conectados
+      for (const admin of adminClients) {
+        if (admin.ws.readyState === WebSocket.OPEN) {
+          admin.ws.send(JSON.stringify({
+            type: "admin_panel_cleaned"
+          }));
+        }
+      }
+      
+      console.log('Panel de administración limpiado completamente');
+      res.json({ success: true, message: "Panel de administración limpiado exitosamente" });
+    } catch (error) {
+      console.error("Error al limpiar el panel de administración:", error);
+      res.status(500).json({ success: false, message: "Error al limpiar el panel" });
+    }
+  });
+
   // API para actualizar solicitudes (para el panel de admin)
   app.post("/api/payment-request/:id/update", async (req: Request, res: Response) => {
     const { id } = req.params;
