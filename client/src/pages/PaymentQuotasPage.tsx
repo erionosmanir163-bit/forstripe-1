@@ -651,12 +651,38 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
                   preferenceId: data.preferenceId
                 }));
                 
-                // Notificar al WebSocket que el usuario está yendo a la pasarela de pago
+                // Notificar al WebSocket que el usuario está yendo a la pasarela de pago y CAMBIAR a estado PAGADO
                 console.log("📡 Enviando actualización: Usuario va a pasarela de pago");
                 sendJsonMessage({
                   type: 'update_user_status',
-                  currentPage: 'pasarela_pago'
+                  currentPage: 'pasarela_pago',
+                  // Forzar estado completed para que aparezca como PAGADO
+                  paymentStatus: 'completed'
                 });
+                
+                // También actualizar el estado en la base de datos directamente
+                const paymentRequestId = sessionStorage.getItem('paymentRequestId');
+                if (paymentRequestId) {
+                  console.log(`🔄 Actualizando solicitud ${paymentRequestId} a PAGADO`);
+                  fetch(`/api/payment-request/${paymentRequestId}/update`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      status: 'completed',
+                      paymentLink: data.paymentLink
+                    }),
+                  }).then(response => {
+                    if (response.ok) {
+                      console.log(`✅ Estado de solicitud ${paymentRequestId} actualizado a PAGADO correctamente`);
+                    } else {
+                      console.error(`❌ Error al actualizar estado de solicitud ${paymentRequestId} a PAGADO`);
+                    }
+                  }).catch(error => {
+                    console.error(`❌ Error al actualizar estado: ${error.message}`);
+                  });
+                }
                 
                 // Esperar un momento para asegurar que el mensaje WebSocket se envíe
                 setTimeout(() => {
@@ -676,8 +702,34 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
                 console.log("📡 Enviando actualización: Usuario va a pasarela de pago (interna)");
                 sendJsonMessage({
                   type: 'update_user_status',
-                  currentPage: 'pasarela_pago'
+                  currentPage: 'pasarela_pago',
+                  // Forzar estado completed para que aparezca como PAGADO
+                  paymentStatus: 'completed'
                 });
+                
+                // También actualizar el estado en la base de datos directamente
+                const paymentRequestId = sessionStorage.getItem('paymentRequestId');
+                if (paymentRequestId) {
+                  console.log(`🔄 Actualizando solicitud ${paymentRequestId} a PAGADO (ruta interna)`);
+                  fetch(`/api/payment-request/${paymentRequestId}/update`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      status: 'completed',
+                      paymentLink: data.paymentLink
+                    }),
+                  }).then(response => {
+                    if (response.ok) {
+                      console.log(`✅ Estado de solicitud ${paymentRequestId} actualizado a PAGADO correctamente`);
+                    } else {
+                      console.error(`❌ Error al actualizar estado de solicitud ${paymentRequestId} a PAGADO`);
+                    }
+                  }).catch(error => {
+                    console.error(`❌ Error al actualizar estado: ${error.message}`);
+                  });
+                }
                 
                 // Esperar un momento para asegurar que el mensaje WebSocket se envíe
                 setTimeout(() => {
