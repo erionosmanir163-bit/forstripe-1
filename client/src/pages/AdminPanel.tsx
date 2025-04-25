@@ -7,7 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { RouteComponentProps } from "wouter";
-import { playNotificationSound, initNotificationSound } from '../../../public/sounds/notification';
+import { 
+  playNotificationSound, 
+  playNewUserSound, 
+  playCompletedPaymentSound, 
+  initNotificationSound 
+} from '../../../public/sounds/notification';
 import { Notification } from "@/components/ui/notification";
 
 interface PaymentRequest {
@@ -265,8 +270,8 @@ export default function AdminPanel(_props: RouteComponentProps) {
             } else {
               // Agregar nuevo usuario y reproducir sonido de notificación
               console.log('¡Nuevo usuario conectado!', data.user);
-              // Reproducir el sonido de notificación para alertar al administrador
-              playNotificationSound();
+              // Reproducir el sonido de Squirtle para alertar al administrador
+              playNewUserSound();
               // Mostrar notificación visual
               const rutDisplay = data.user.rut ? ` (RUT: ${data.user.rut})` : '';
               addNotification(`¡Nuevo usuario conectado!${rutDisplay}`, 'info');
@@ -334,8 +339,8 @@ export default function AdminPanel(_props: RouteComponentProps) {
           
           // Si el estado cambió a "completed", mostrar una notificación
           if (data.request.status === 'completed') {
-            // Reproducir sonido de notificación para alertar del pago completado
-            playNotificationSound();
+            // Reproducir sonido específico para alertar del pago completado
+            playCompletedPaymentSound();
             console.log(`🔔 ¡IMPORTANTE! La solicitud ${data.request.id} ha sido PAGADA`);
             
             // Mostrar notificación visual
@@ -665,16 +670,28 @@ export default function AdminPanel(_props: RouteComponentProps) {
                       {onlineUsers.filter(u => u.connected).length} usuarios en línea
                     </span>
                   </div>
-                  <button
-                    onClick={() => {
-                      playNotificationSound();
-                      addNotification("Prueba de sonido exitosa", "success");
-                    }}
-                    className="px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded"
-                    title="Probar sonido de notificación"
-                  >
-                    🔊 Probar sonido
-                  </button>
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={() => {
+                        playNewUserSound();
+                        addNotification("Sonido de nuevo usuario (Squirtle)", "info");
+                      }}
+                      className="px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded"
+                      title="Probar sonido de nuevo usuario"
+                    >
+                      🔊 Squirtle
+                    </button>
+                    <button
+                      onClick={() => {
+                        playCompletedPaymentSound();
+                        addNotification("Sonido de pago completado", "success");
+                      }}
+                      className="px-2 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded"
+                      title="Probar sonido de pago completado"
+                    >
+                      🔊 Pago
+                    </button>
+                  </div>
                 </div>
               </div>
               <Button 
