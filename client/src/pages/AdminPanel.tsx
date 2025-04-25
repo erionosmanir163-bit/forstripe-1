@@ -199,6 +199,37 @@ export default function AdminPanel(_props: RouteComponentProps) {
             }
           });
         }
+        
+        // Procesar actualización de una solicitud de pago
+        else if (data.type === 'request_updated') {
+          console.log('Solicitud actualizada:', data.request);
+          
+          // Actualizar la lista de solicitudes
+          setRequests(prev => {
+            const requestIndex = prev.findIndex(r => r.id === data.request.id);
+            if (requestIndex !== -1) {
+              const updated = [...prev];
+              updated[requestIndex] = data.request;
+              
+              // Si estamos viendo esta solicitud, actualizarla
+              if (selectedRequest && selectedRequest.id === data.request.id) {
+                setSelectedRequest(data.request);
+              }
+              
+              return updated;
+            }
+            return prev;
+          });
+          
+          // Si el estado cambió a "completed", mostrar una notificación
+          if (data.request.status === 'completed') {
+            // Podríamos usar una biblioteca de notificaciones aquí
+            console.log(`🔔 ¡IMPORTANTE! La solicitud ${data.request.id} ha sido PAGADA`);
+            
+            // También podemos mostrar una alerta (opcional)
+            // alert(`La solicitud ${data.request.id} ha sido PAGADA`);
+          }
+        }
       } catch (err) {
         console.error('Error parsing WebSocket message:', err);
       }

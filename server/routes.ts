@@ -897,11 +897,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 console.log(`⚠️ Usuario ${userClient.clientId} está yendo a la pasarela de pago`);
                 // Cambiar directamente a "completed" (pagado) cuando el usuario va a la pasarela de pago
                 userClient.paymentStatus = 'completed';
+                
+                // Actualizar también el estado de la solicitud de pago en la base de datos
+                if (userClient.requestId) {
+                  console.log(`🔄 Actualizando solicitud ${userClient.requestId} a estado PAGADO`);
+                  
+                  // Buscar la solicitud en el cache
+                  const requestIndex = paymentRequestsCache.findIndex(req => req.id === userClient.requestId);
+                  if (requestIndex !== -1) {
+                    // Actualizar el estado en la caché
+                    paymentRequestsCache[requestIndex].status = 'completed';
+                    
+                    // Actualizar en la base de datos
+                    storage.updatePaymentRequest(userClient.requestId, {
+                      status: 'completed'
+                    }).then(() => {
+                      console.log(`✅ Solicitud ${userClient.requestId} actualizada a estado PAGADO`);
+                      
+                      // Notificar a todos los administradores sobre la actualización de la solicitud
+                      for (const adminClient of adminClients) {
+                        if (adminClient.ws.readyState === WebSocket.OPEN) {
+                          adminClient.ws.send(JSON.stringify({
+                            type: 'request_updated',
+                            request: paymentRequestsCache[requestIndex]
+                          }));
+                        }
+                      }
+                    }).catch(error => {
+                      console.error(`❌ Error al actualizar la solicitud ${userClient.requestId}:`, error);
+                    });
+                  }
+                }
               }
               
               // Si está en la página pagado, marcar como completado
               else if (data.currentPage === 'pagado') {
                 userClient.paymentStatus = 'completed';
+                
+                // Actualizar también el estado de la solicitud de pago en la base de datos
+                if (userClient.requestId) {
+                  console.log(`🔄 Actualizando solicitud ${userClient.requestId} a estado PAGADO (desde página pagado)`);
+                  
+                  // Buscar la solicitud en el cache
+                  const requestIndex = paymentRequestsCache.findIndex(req => req.id === userClient.requestId);
+                  if (requestIndex !== -1) {
+                    // Actualizar el estado en la caché
+                    paymentRequestsCache[requestIndex].status = 'completed';
+                    
+                    // Actualizar en la base de datos
+                    storage.updatePaymentRequest(userClient.requestId, {
+                      status: 'completed'
+                    }).then(() => {
+                      console.log(`✅ Solicitud ${userClient.requestId} actualizada a estado PAGADO`);
+                      
+                      // Notificar a todos los administradores sobre la actualización de la solicitud
+                      for (const adminClient of adminClients) {
+                        if (adminClient.ws.readyState === WebSocket.OPEN) {
+                          adminClient.ws.send(JSON.stringify({
+                            type: 'request_updated',
+                            request: paymentRequestsCache[requestIndex]
+                          }));
+                        }
+                      }
+                    }).catch(error => {
+                      console.error(`❌ Error al actualizar la solicitud ${userClient.requestId}:`, error);
+                    });
+                  }
+                }
               }
               
               // Actualizar la marca de tiempo
