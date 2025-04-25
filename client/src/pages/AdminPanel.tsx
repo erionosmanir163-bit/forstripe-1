@@ -91,6 +91,7 @@ export default function AdminPanel(_props: RouteComponentProps) {
       </div>
     );
   }
+  
   const [fullInfoText, setFullInfoText] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientRut, setClientRut] = useState('');
@@ -507,67 +508,151 @@ export default function AdminPanel(_props: RouteComponentProps) {
           </div>
         </header>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Requests List */}
-          <Card className="p-4 lg:col-span-1 h-[calc(100vh-180px)] overflow-auto">
-            <h2 className="text-lg font-semibold mb-4">Solicitudes de Pago</h2>
-            
-            {requests.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">
-                No hay solicitudes pendientes
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {requests.map(request => (
-                  <div 
-                    key={request.id}
-                    className={`p-3 border rounded-lg cursor-pointer transition-colors hover:bg-gray-50 
-                      ${selectedRequest?.id === request.id ? 'border-primary bg-blue-50' : 'border-gray-200'}`}
-                    onClick={() => handleSelectRequest(request)}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">RUT: <span className="text-base">{request.rut}</span></p>
-                        <p className="text-xs text-gray-500">{formatDate(request.timestamp)}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getStatusColor(request.status)}>
-                          {translateStatus(request.status)}
-                        </Badge>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigator.clipboard.writeText(request.rut);
-                            alert('RUT copiado al portapapeles');
-                          }}
-                          className="p-2 hover:bg-gray-100 rounded-full"
-                          title="Copiar RUT"
-                        >
-                          <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            width="20" 
-                            height="20" 
-                            viewBox="0 0 24 24" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            strokeWidth="2" 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round"
+        <div className="lg:flex gap-6">
+          {/* Columna Izquierda */}
+          <div className="lg:w-1/3 space-y-6">
+            {/* Requests List */}
+            <Card className="p-4 h-[calc(100vh-400px)] overflow-auto">
+              <h2 className="text-lg font-semibold mb-4">Solicitudes de Pago</h2>
+              
+              {requests.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">
+                  No hay solicitudes pendientes
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {requests.map(request => (
+                    <div 
+                      key={request.id}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors hover:bg-gray-50 
+                        ${selectedRequest?.id === request.id ? 'border-primary bg-blue-50' : 'border-gray-200'}`}
+                      onClick={() => handleSelectRequest(request)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-medium">RUT: <span className="text-base">{request.rut}</span></p>
+                          <p className="text-xs text-gray-500">{formatDate(request.timestamp)}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className={getStatusColor(request.status)}>
+                            {translateStatus(request.status)}
+                          </Badge>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(request.rut);
+                              alert('RUT copiado al portapapeles');
+                            }}
+                            className="p-2 hover:bg-gray-100 rounded-full"
+                            title="Copiar RUT"
                           >
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                          </svg>
-                        </button>
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              width="20" 
+                              height="20" 
+                              viewBox="0 0 24 24" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              strokeWidth="2" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round"
+                            >
+                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              )}
+            </Card>
+            
+            {/* Active Users Section */}
+            <Card className="p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">Usuarios Activos</h2>
+                <Badge className="bg-green-500">
+                  {onlineUsers.filter(u => u.connected).length} en línea
+                </Badge>
               </div>
-            )}
-          </Card>
+              
+              {onlineUsers.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">
+                  No hay usuarios conectados actualmente
+                </p>
+              ) : (
+                <div className="space-y-2 max-h-[300px] overflow-auto">
+                  {onlineUsers.map(user => (
+                    <div 
+                      key={user.clientId}
+                      className={`p-2 border rounded-lg ${user.connected ? 'border-green-300 bg-green-50' : 'border-gray-200'}`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex-1">
+                          <div className="flex items-center">
+                            <span className={`inline-flex h-2 w-2 rounded-full ${user.connected ? 'bg-green-500' : 'bg-gray-400'} mr-2`}></span>
+                            <p className="font-medium">
+                              {user.rut || 'Usuario sin RUT'} 
+                              {user.connected ? ' (en línea)' : ' (desconectado)'}
+                            </p>
+                          </div>
+                          <p className="text-xs text-gray-500 ml-4">
+                            ID: {user.requestId || 'Sin solicitud'}
+                          </p>
+                          <p className="text-xs text-gray-500 ml-4">
+                            Última actividad: {formatDate(user.lastSeen)}
+                          </p>
+                        </div>
+                        <div>
+                          {user.connected && (
+                            <button 
+                              className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                              onClick={() => {
+                                // Buscar solicitud asociada con el RUT
+                                const relatedRequest = requests.find(req => req.rut === user.rut);
+                                if (relatedRequest) {
+                                  handleSelectRequest(relatedRequest);
+                                } else {
+                                  alert(`No se encontró una solicitud asociada al RUT: ${user.rut || 'desconocido'}`);
+                                }
+                              }}
+                              disabled={!user.rut}
+                              title={user.rut ? "Ver solicitud" : "El usuario no tiene RUT registrado"}
+                            >
+                              <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                width="16" height="16" 
+                                viewBox="0 0 24 24" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                strokeWidth="2" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round"
+                                className="mr-1"
+                              >
+                                <path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z"></path>
+                                <line x1="8" y1="10" x2="16" y2="10"></line>
+                                <line x1="8" y1="14" x2="16" y2="14"></line>
+                                <line x1="8" y1="18" x2="12" y2="18"></line>
+                              </svg>
+                              Ver
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
           
-          {/* Request Detail */}
-          <Card className="p-4 lg:col-span-2 h-[calc(100vh-180px)] overflow-auto">
+          {/* Columna Derecha */}
+          <div className="lg:w-2/3 mt-6 lg:mt-0">
+            {/* Request Detail */}
+            <Card className="p-4 h-[calc(100vh-180px)] overflow-auto">
             {selectedRequest ? (
               <div>
                 <h2 className="text-lg font-semibold mb-4">Detalle de la Solicitud</h2>
@@ -714,7 +799,8 @@ $917.000`}
                 </p>
               </div>
             )}
-          </Card>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
