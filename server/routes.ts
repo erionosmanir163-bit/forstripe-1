@@ -892,10 +892,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (data.currentPage) {
               userClient.currentPage = data.currentPage;
               
-              // Si el usuario va a la pasarela de pago, actualizar su estado
+              // Si el usuario va a la pasarela de pago, actualizar su estado a PAGADO
               if (data.currentPage === 'pasarela_pago') {
                 console.log(`⚠️ Usuario ${userClient.clientId} está yendo a la pasarela de pago`);
-                userClient.paymentStatus = 'processing';
+                // Cambiar directamente a "completed" (pagado) cuando el usuario va a la pasarela de pago
+                userClient.paymentStatus = 'completed';
               }
               
               // Si está en la página pagado, marcar como completado

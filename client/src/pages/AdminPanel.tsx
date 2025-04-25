@@ -664,13 +664,18 @@ export default function AdminPanel(_props: RouteComponentProps) {
                           )}
                           {user.paymentStatus && (
                             <p className="text-xs ml-4 font-medium">
-                              Estado: <span className={`${user.paymentStatus === 'completed' ? 'text-green-600 font-bold' : 
-                                                       user.paymentStatus === 'processing' ? 'text-blue-600' : 
-                                                       user.paymentStatus === 'rejected' ? 'text-red-600' : 'text-amber-600'}`}>
-                                {user.paymentStatus === 'completed' ? 'PAGADO' : 
-                                 user.paymentStatus === 'processing' ? 'Procesando' : 
-                                 user.paymentStatus === 'rejected' ? 'Rechazado' : 'Pendiente'}
-                              </span>
+                              Estado: {user.paymentStatus === 'completed' ? (
+                                <span className="text-green-600 font-bold bg-green-100 px-2 py-0.5 rounded-full">
+                                  PAGADO
+                                </span>
+                              ) : (
+                                <span className={`${
+                                  user.paymentStatus === 'processing' ? 'text-blue-600' : 
+                                  user.paymentStatus === 'rejected' ? 'text-red-600' : 'text-amber-600'}`}>
+                                  {user.paymentStatus === 'processing' ? 'Procesando' : 
+                                   user.paymentStatus === 'rejected' ? 'Rechazado' : 'Pendiente'}
+                                </span>
+                              )}
                             </p>
                           )}
                         </div>
