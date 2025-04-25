@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { RouteComponentProps } from "wouter";
+import { playNotificationSound } from '../../../public/sounds/notification';
+import { Notification } from "@/components/ui/notification";
 
 interface PaymentRequest {
   id: string;
@@ -51,6 +53,14 @@ export default function AdminPanel(_props: RouteComponentProps) {
     paymentStatus?: 'pending' | 'processing' | 'completed' | 'rejected';
   }
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  
+  // Estado para las notificaciones
+  interface NotificationMessage {
+    id: string;
+    message: string;
+    type: 'info' | 'success' | 'warning' | 'error';
+  }
+  const [notifications, setNotifications] = useState<NotificationMessage[]>([]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -230,7 +240,10 @@ export default function AdminPanel(_props: RouteComponentProps) {
               updated[userIndex] = data.user;
               return updated;
             } else {
-              // Agregar nuevo usuario
+              // Agregar nuevo usuario y reproducir sonido de notificación
+              console.log('¡Nuevo usuario conectado!', data.user);
+              // Reproducir el sonido de notificación para alertar al administrador
+              playNotificationSound();
               return [...prev, data.user];
             }
           });
@@ -295,7 +308,8 @@ export default function AdminPanel(_props: RouteComponentProps) {
           
           // Si el estado cambió a "completed", mostrar una notificación
           if (data.request.status === 'completed') {
-            // Podríamos usar una biblioteca de notificaciones aquí
+            // Reproducir sonido de notificación para alertar del pago completado
+            playNotificationSound();
             console.log(`🔔 ¡IMPORTANTE! La solicitud ${data.request.id} ha sido PAGADA`);
             
             // También podemos mostrar una alerta (opcional)
