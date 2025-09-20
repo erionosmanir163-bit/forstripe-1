@@ -1,4 +1,5 @@
 import type { Express, Request, Response, NextFunction } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import type { WebSocket as WebSocketType } from "ws";
@@ -84,6 +85,111 @@ function broadcastUserStatusUpdates() {
 // Programar actualizaciones periódicas cada 30 segundos
 setInterval(broadcastUserStatusUpdates, 30 * 1000);
 
+// Función genérica para enviar mensajes a todos los administradores
+function broadcastToAdmins(payload: any) {
+  adminClients.forEach(admin => {
+    if (admin.ws.readyState === WebSocket.OPEN) {
+      admin.ws.send(JSON.stringify(payload));
+    }
+  });
+}
+
+// Configurar webhook de Stripe ANTES de express.json() para preservar el cuerpo raw
+export function setupStripeWebhook(app: any) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2024-06-20'
+  });
+
+  // Webhook de Stripe para verificar eventos de pago
+  app.post('/webhooks/stripe', express.raw({type: 'application/json'}), async (req: any, res: any) => {
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      console.error('❌ STRIPE_WEBHOOK_SECRET no configurado');
+      return res.status(500).send('Webhook secret not configured');
+    }
+
+    let event;
+
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig!, webhookSecret);
+      console.log('✅ Webhook verificado:', event.type);
+    } catch (err: any) {
+      console.error('❌ Error verificando webhook:', err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Manejar eventos específicos de Stripe
+    switch (event.type) {
+      case 'payment_intent.succeeded':
+        const paymentIntent = event.data.object;
+        const requestId = paymentIntent.metadata.requestId;
+        
+        if (requestId) {
+          console.log(`✅ Pago confirmado para solicitud ${requestId}`);
+          
+          // Actualizar el estado de la solicitud de pago
+          try {
+            const paymentRequest = await storage.getPaymentRequest(requestId);
+            if (paymentRequest) {
+              await storage.updatePaymentRequest(requestId, {
+                status: 'completed',
+                paymentIntentId: paymentIntent.id,
+                paidAmount: paymentIntent.amount?.toString(),
+                paidAt: new Date().toISOString()
+              });
+              
+              console.log(`💰 Solicitud ${requestId} marcada como pagada`);
+              
+              // Notificar a los clientes admin conectados via WebSocket
+              broadcastToAdmins({
+                type: 'payment_confirmed',
+                requestId: requestId,
+                amount: paymentIntent.amount,
+                paymentIntentId: paymentIntent.id
+              });
+            }
+          } catch (error) {
+            console.error('❌ Error actualizando estado de pago:', error);
+          }
+        }
+        break;
+
+      case 'payment_intent.payment_failed':
+        const failedPayment = event.data.object;
+        const failedRequestId = failedPayment.metadata.requestId;
+        
+        if (failedRequestId) {
+          console.log(`❌ Pago falló para solicitud ${failedRequestId}`);
+          
+          try {
+            await storage.updatePaymentRequest(failedRequestId, {
+              status: 'rejected',
+              paymentIntentId: failedPayment.id,
+              failureReason: failedPayment.last_payment_error?.message || 'Unknown error'
+            });
+            
+            // Notificar a los clientes admin conectados via WebSocket
+            broadcastToAdmins({
+              type: 'payment_failed',
+              requestId: failedRequestId,
+              reason: failedPayment.last_payment_error?.message || 'Unknown error'
+            });
+          } catch (error) {
+            console.error('❌ Error actualizando estado de pago fallido:', error);
+          }
+        }
+        break;
+
+      default:
+        console.log(`⚪ Evento no manejado: ${event.type}`);
+    }
+
+    res.status(200).send('Webhook received');
+  });
+}
+
 // DEBUG: Create a test payment request
 const testId = 'test-id-123';
 const testRequest: PaymentRequest = {
@@ -166,6 +272,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Se requieren índices de cuotas seleccionadas' });
       }
 
+      // Crear clave de idempotencia para evitar duplicados
+      const idempotencyKey = `${requestId}-${selectedQuotaIndices.sort().join('-')}`;
+      console.log('🔑 Clave de idempotencia:', idempotencyKey);
+
       // Obtener la solicitud de pago del storage para validar 
       const paymentRequest = await storage.getPaymentRequest(requestId);
       if (!paymentRequest) {
@@ -216,10 +326,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Buscar el total en las líneas de esta cuota
+        // Buscar primero "Total Cuota" y luego encontrar el monto correspondiente
+        let totalCuotaIndex = -1;
         for (let i = 0; i < quotaLines.length; i++) {
-          if (quotaLines[i] === "Total a Pagar" && i + 1 < quotaLines.length) {
-            totalAmountStr = quotaLines[i + 1].trim();
+          if (quotaLines[i] === "Total Cuota") {
+            totalCuotaIndex = i;
             break;
+          }
+        }
+        
+        // Si encontramos "Total Cuota", buscar el monto después del vencimiento
+        if (totalCuotaIndex !== -1) {
+          // Buscar el primer monto que empiece con $ después de la línea "Total Cuota"
+          for (let i = totalCuotaIndex + 1; i < quotaLines.length; i++) {
+            const line = quotaLines[i].trim();
+            if (line.startsWith('$') && line.length > 1) {
+              // Tomar el último monto que encuentra (que debería ser el total)
+              totalAmountStr = line;
+            }
           }
         }
         
@@ -265,6 +389,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           items: itemDescriptions.join(', '),
           quotas_count: selectedQuotaIndices.length.toString(),
         },
+      }, {
+        idempotencyKey: idempotencyKey
       });
       
       console.log("✅ Payment Intent creado correctamente");
@@ -281,13 +407,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('❌ Error al generar enlace:', error);
       
-      return res.json({
+      return res.status(500).json({
         success: false,
         error: error.message,
         isFallback: true
       });
     }
   });
+
+  // Webhook de Stripe ahora se registra en setupStripeWebhook() antes de express.json()
   
   
   // API routes

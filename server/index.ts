@@ -3,6 +3,12 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// CRÍTICO: El webhook de Stripe DEBE registrarse ANTES de express.json() 
+// para preservar el cuerpo raw necesario para la verificación de firma
+import { setupStripeWebhook } from "./routes";
+setupStripeWebhook(app);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

@@ -37,6 +37,11 @@ export const paymentRequests = pgTable("payment_requests", {
   provider: text("provider"), // Proveedor de pago
   quotas: json("quotas"), // Información de cuotas como JSON
   redirectUrl: text("redirect_url"), // URL de redirección
+  // Campos específicos de Stripe
+  paymentIntentId: text("payment_intent_id"), // ID del Payment Intent de Stripe
+  paidAmount: text("paid_amount"), // Monto realmente pagado
+  paidAt: text("paid_at"), // Timestamp de cuándo se pagó
+  failureReason: text("failure_reason"), // Razón de fallo del pago si aplica
 });
 
 export const insertPaymentRequestSchema = createInsertSchema(paymentRequests);
