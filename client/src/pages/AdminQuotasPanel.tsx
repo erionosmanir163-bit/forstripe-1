@@ -44,7 +44,7 @@ export default function AdminQuotasPanel(_props: RouteComponentProps) {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.trim() === 'Nina1010@') {
+    if (password.trim() === 'Fenix1010@*') {
       sessionStorage.setItem('adminAuth', 'true');
       setIsAuthenticated(true);
       await fetchRequests(); // Cargar las solicitudes después de autenticar
