@@ -38,6 +38,10 @@ export interface PaymentRequest {
   provider?: string;
   quotas?: any;
   redirectUrl?: string;
+  paymentIntentId?: string;
+  paidAmount?: string;
+  paidAt?: string;
+  failureReason?: string;
 }
 
 export class DatabaseStorage implements IStorage {
