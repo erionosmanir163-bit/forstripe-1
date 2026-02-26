@@ -5,16 +5,22 @@ import { WebSocketServer, WebSocket } from "ws";
 import type { WebSocket as WebSocketType } from "ws";
 import { storage, PaymentRequest } from "./storage";
 import fetch from 'node-fetch';
+import https from 'https';
 import cors from 'cors';
 
 // Billpocket API configuration
-const BILLPOCKET_API_URL = process.env.BILLPOCKET_ENV === 'production' 
+const BILLPOCKET_IS_PRODUCTION = process.env.BILLPOCKET_ENV === 'production';
+const BILLPOCKET_API_URL = BILLPOCKET_IS_PRODUCTION 
   ? 'https://paywith.billpocket.com/api/v1' 
   : 'https://test.paywith.billpocket.com/api/v1';
-const BILLPOCKET_CHECKOUT_URL = process.env.BILLPOCKET_ENV === 'production'
+const BILLPOCKET_CHECKOUT_URL = BILLPOCKET_IS_PRODUCTION
   ? 'https://paywith.billpocket.com/checkout'
   : 'https://test.paywith.billpocket.com/checkout';
 const BILLPOCKET_API_KEY = process.env.BILLPOCKET_API_KEY || process.env.KUSHKI_PRIVATE_KEY || '';
+
+const billpocketAgent = BILLPOCKET_IS_PRODUCTION 
+  ? undefined 
+  : new https.Agent({ rejectUnauthorized: false });
 
 // Interfaces para clientes
 
@@ -317,13 +323,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       console.log('📤 Payload enviado:', JSON.stringify({ ...checkoutPayload, apiKey: checkoutPayload.apiKey.substring(0, 8) + '...' }));
       
-      const billpocketResponse = await fetch(`${BILLPOCKET_API_URL}/checkout`, {
+      const fetchOptions: any = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(checkoutPayload)
-      });
+      };
+      if (billpocketAgent) {
+        fetchOptions.agent = billpocketAgent;
+      }
+      const billpocketResponse = await fetch(`${BILLPOCKET_API_URL}/checkout`, fetchOptions);
 
       const billpocketResult = await billpocketResponse.json() as any;
       console.log('📦 Respuesta de Billpocket:', JSON.stringify(billpocketResult));
