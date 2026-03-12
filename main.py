@@ -206,7 +206,7 @@ def main():
         else:
             console.print("[red]Opción no válida. Elige entre 1 y 6.[/red]")
 
-        input("\n[Presiona Enter para continuar...]")
+        input("\nPresiona Enter para continuar...")
 
 
 if __name__ == "__main__":
