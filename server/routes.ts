@@ -5,7 +5,6 @@ import { WebSocketServer, WebSocket } from "ws";
 import type { WebSocket as WebSocketType } from "ws";
 import { storage, PaymentRequest } from "./storage";
 import fetch from 'node-fetch';
-import https from 'https';
 import cors from 'cors';
 
 process.on('uncaughtException', (err) => {
@@ -23,19 +22,10 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-// Billpocket API configuration
-const BILLPOCKET_IS_PRODUCTION = process.env.BILLPOCKET_ENV === 'production';
-const BILLPOCKET_API_URL = BILLPOCKET_IS_PRODUCTION 
-  ? 'https://paywith.billpocket.com/api/v1' 
-  : 'https://test.paywith.billpocket.com/api/v1';
-const BILLPOCKET_CHECKOUT_URL = BILLPOCKET_IS_PRODUCTION
-  ? 'https://paywith.billpocket.com/checkout'
-  : 'https://test.paywith.billpocket.com/checkout';
-const BILLPOCKET_API_KEY = process.env.BILLPOCKET_API_KEY || process.env.KUSHKI_PRIVATE_KEY || '';
-
-const billpocketAgent = BILLPOCKET_IS_PRODUCTION 
-  ? undefined 
-  : new https.Agent({ rejectUnauthorized: false });
+// Efipay API configuration (modo pruebas, pesos chilenos CLP)
+// Posible base URL: https://sag.efipay.co o https://api.efipay.co
+const EFIPAY_BASE_URL = 'https://sag.efipay.co';
+const EFIPAY_TOKEN = process.env.EFIPAY_TEST_KEY || process.env.EFIPAY_API_TOKEN || '';
 
 // Interfaces para clientes
 
@@ -132,7 +122,7 @@ function broadcastToUser(requestId: string, payload: any) {
 
 // Webhook setup for backward compatibility with server/index.ts
 export function setupStripeWebhook(_app: any) {
-  console.log('ℹ️ Billpocket webhook configurado en /api/billpocket-webhook');
+  console.log('ℹ️ Efipay webhook configurado en /api/efipay-webhook');
 }
 
 // DEBUG: Create a test payment request
@@ -184,11 +174,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Habilitamos CORS para todas las rutas
   app.use(cors());
   
-  // Validar credenciales de Billpocket
-  if (!BILLPOCKET_API_KEY) {
-    console.warn('⚠️ BILLPOCKET_API_KEY no configurada - pagos no funcionarán');
+  // Validar credenciales de Efipay
+  if (!EFIPAY_TOKEN) {
+    console.warn('⚠️ EFIPAY_TEST_KEY no configurada - pagos no funcionarán');
   } else {
-    console.log('✅ Billpocket configurado correctamente');
+    console.log('✅ Efipay configurado correctamente (modo pruebas CLP)');
   }
   
   
@@ -202,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return isNaN(amount) ? 0 : amount;
   }
 
-  // Endpoint para crear checkout de Billpocket
+  // Endpoint para crear checkout de Efipay (modo pruebas, CLP)
   app.post("/generar-enlace", async (req: Request, res: Response) => {
     try {
       const { requestId, selectedQuotaIndices } = req.body;
@@ -321,68 +311,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`💲 Total calculado server-side: $${totalAmount.toLocaleString('es-CL')} CLP`);
       
-      // Crear checkout en Billpocket
-      if (!BILLPOCKET_API_KEY) {
-        return res.status(500).json({ error: 'Billpocket no está configurado correctamente' });
+      // Crear pago en Efipay (modo pruebas, CLP)
+      if (!EFIPAY_TOKEN) {
+        return res.status(500).json({ error: 'Efipay no está configurado correctamente (falta EFIPAY_TEST_KEY en Secrets)' });
       }
 
-      console.log('🔄 Creando checkout en Billpocket...');
-      console.log('🌐 URL:', `${BILLPOCKET_API_URL}/checkout`);
-      console.log('🔑 API Key (primeros 8 chars):', BILLPOCKET_API_KEY.substring(0, 8) + '...');
-      
-      const checkoutPayload = {
-        apiKey: BILLPOCKET_API_KEY,
-        externalId: idempotencyKey,
-        items: itemDescriptions,
-        total: totalAmount
+      // Obtener email del pagador desde la solicitud
+      const payerEmail = paymentRequest.email || 'pagador@ejemplo.com';
+      const payerName = paymentRequest.rut || 'Cliente';
+
+      // Construir payload para Efipay
+      // Endpoints alternativos: /api/v1/payment/generate-payment | /api/v1/payment/generate-transaction | /api/v1/transactions
+      const efipayPayload = {
+        amount: totalAmount,
+        currency: 'CLP',
+        description: itemDescriptions.join(', ') || 'Pago cuota préstamo vehicular',
+        checkout_type: 'redirect',
+        external_id: idempotencyKey,
+        payer: {
+          email: payerEmail,
+          name: payerName
+        },
+        redirect_urls: {
+          success: `${req.protocol}://${req.get('host')}/api/efipay-return?status=success`,
+          failure: `${req.protocol}://${req.get('host')}/api/efipay-return?status=failure`
+        }
       };
-      console.log('📤 Payload enviado:', JSON.stringify({ ...checkoutPayload, apiKey: checkoutPayload.apiKey.substring(0, 8) + '...' }));
-      
-      const fetchOptions: any = {
+
+      console.log('🔄 Creando pago en Efipay...');
+      console.log('🌐 URL:', `${EFIPAY_BASE_URL}/api/v1/payment/generate-payment`);
+      console.log('🔑 Token (primeros 10 chars):', EFIPAY_TOKEN.substring(0, 10) + '...');
+      console.log('📤 Payload enviado:', JSON.stringify(efipayPayload));
+
+      const efipayResponse = await fetch(`${EFIPAY_BASE_URL}/api/v1/payment/generate-payment`, {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${EFIPAY_TOKEN}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(checkoutPayload)
-      };
-      if (billpocketAgent) {
-        fetchOptions.agent = billpocketAgent;
-      }
-      const billpocketResponse = await fetch(`${BILLPOCKET_API_URL}/checkout`, fetchOptions);
+        body: JSON.stringify(efipayPayload)
+      });
 
-      const billpocketResult = await billpocketResponse.json() as any;
-      console.log('📦 Respuesta de Billpocket:', JSON.stringify(billpocketResult));
+      const efipayResult = await efipayResponse.json() as any;
+      console.log('📦 Respuesta de Efipay (status', efipayResponse.status, '):', JSON.stringify(efipayResult));
 
-      if (billpocketResult.checkoutId) {
-        console.log('✅ Checkout creado exitosamente en Billpocket');
-        
-        const checkoutUrl = `${BILLPOCKET_CHECKOUT_URL}/${billpocketResult.checkoutId}`;
-        
-        // Guardar el checkoutId en la solicitud para rastrear el pago
-        try {
-          await storage.updatePaymentRequest(requestId, {
-            paymentIntentId: billpocketResult.checkoutId,
-            paidAmount: totalAmount.toString()
+      if (!efipayResponse.ok) {
+        // Si da 404, intentar endpoint alternativo: /api/v1/payment/generate-transaction
+        if (efipayResponse.status === 404) {
+          console.log('⚠️ Endpoint principal dio 404, intentando /api/v1/payment/generate-transaction...');
+          const altResponse = await fetch(`${EFIPAY_BASE_URL}/api/v1/payment/generate-transaction`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${EFIPAY_TOKEN}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(efipayPayload)
           });
-        } catch (dbError) {
-          console.error('❌ Error guardando checkoutId:', dbError);
+          const altResult = await altResponse.json() as any;
+          console.log('📦 Respuesta alternativa Efipay (status', altResponse.status, '):', JSON.stringify(altResult));
+
+          if (!altResponse.ok) {
+            return res.status(altResponse.status).json({
+              success: false,
+              error: altResult.message || altResult.error || 'Error al crear pago en Efipay',
+              efipay_response: altResult
+            });
+          }
+
+          // Éxito con endpoint alternativo
+          const checkoutUrl = altResult.payment_url || altResult.checkout_url || altResult.redirect_url || altResult.url;
+          const paymentId = altResult.payment_id || altResult.transaction_id || altResult.id || idempotencyKey;
+
+          if (!checkoutUrl) {
+            console.error('❌ Efipay no devolvió URL de pago:', JSON.stringify(altResult));
+            return res.status(500).json({ success: false, error: 'Efipay no devolvió una URL de pago válida', efipay_response: altResult });
+          }
+
+          try {
+            await storage.updatePaymentRequest(requestId, {
+              paymentIntentId: paymentId,
+              paidAmount: totalAmount.toString()
+            });
+          } catch (dbError) {
+            console.error('❌ Error guardando paymentId:', dbError);
+          }
+
+          console.log('✅ Pago creado exitosamente en Efipay (endpoint alternativo):', checkoutUrl);
+          return res.json({ success: true, checkoutUrl, checkoutId: paymentId, amount: totalAmount });
         }
 
-        return res.json({
-          success: true,
-          checkoutUrl: checkoutUrl,
-          checkoutId: billpocketResult.checkoutId,
-          amount: totalAmount
-        });
-      } else {
-        const errorMessage = billpocketResult.message || billpocketResult.error || 'Error al crear el checkout en Billpocket';
-        console.error('❌ Error en Billpocket:', errorMessage, JSON.stringify(billpocketResult));
-        
-        return res.status(400).json({
+        return res.status(efipayResponse.status).json({
           success: false,
-          error: errorMessage
+          error: efipayResult.message || efipayResult.error || 'Error al crear pago en Efipay',
+          efipay_response: efipayResult
         });
       }
+
+      // Extraer URL de pago del response exitoso
+      const checkoutUrl = efipayResult.payment_url || efipayResult.checkout_url || efipayResult.redirect_url || efipayResult.url;
+      const paymentId = efipayResult.payment_id || efipayResult.transaction_id || efipayResult.id || idempotencyKey;
+
+      if (!checkoutUrl) {
+        console.error('❌ Efipay no devolvió URL de pago:', JSON.stringify(efipayResult));
+        return res.status(500).json({ success: false, error: 'Efipay no devolvió una URL de pago válida', efipay_response: efipayResult });
+      }
+
+      try {
+        await storage.updatePaymentRequest(requestId, {
+          paymentIntentId: paymentId,
+          paidAmount: totalAmount.toString()
+        });
+      } catch (dbError) {
+        console.error('❌ Error guardando paymentId:', dbError);
+      }
+
+      console.log('✅ Pago creado exitosamente en Efipay:', checkoutUrl);
+      return res.json({ success: true, checkoutUrl, checkoutId: paymentId, amount: totalAmount });
       
     } catch (error: any) {
       console.error('❌ Error al generar enlace:', error);
@@ -395,103 +439,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Billpocket webhook endpoint - receives payment results
-  app.post("/api/billpocket-webhook", async (req: Request, res: Response) => {
+  // Efipay webhook endpoint - recibe resultados de pago
+  app.post("/api/efipay-webhook", async (req: Request, res: Response) => {
     try {
       const webhookData = req.body;
-      console.log('📩 Webhook de Billpocket recibido:', JSON.stringify(webhookData));
-      
-      const { checkout, externalId, total, authorization, opId, maskedPAN, message, token, cardBrand, cardIssuer, cardClass, signature } = webhookData;
-      
-      // Basic validation - require essential fields
-      if (!externalId || !checkout) {
-        console.error('❌ Webhook inválido - faltan campos requeridos');
+      console.log('📩 Webhook de Efipay recibido:', JSON.stringify(webhookData));
+
+      // Efipay puede enviar distintos campos según versión de API
+      const {
+        external_id,
+        payment_id,
+        transaction_id,
+        status,
+        amount,
+        message
+      } = webhookData;
+
+      const externalId = external_id || payment_id || transaction_id;
+
+      if (!externalId) {
+        console.error('❌ Webhook inválido - falta external_id / payment_id');
         return res.status(400).json({ error: 'campos requeridos faltantes' });
       }
-      
-      // externalId format is: requestId-quotaIndices
+
+      // external_id format: requestId-quotaIndices
       const requestId = externalId.split('-')[0];
-      
-      // Find payment request by checkoutId or requestId
+
       let paymentRequest = await storage.getPaymentRequest(requestId);
-      
+
       if (!paymentRequest) {
-        // Try to find by iterating all requests
         const allRequests = await storage.getAllPaymentRequests();
-        paymentRequest = allRequests.find(r => r.paymentIntentId === checkout) || undefined;
+        paymentRequest = allRequests.find(r => r.paymentIntentId === externalId) || undefined;
       }
-      
+
       if (!paymentRequest) {
-        console.error('❌ Solicitud de pago no encontrada para:', externalId);
+        console.error('❌ Solicitud no encontrada para:', externalId);
         return res.status(404).json({ error: 'Solicitud no encontrada' });
       }
 
-      // Verify the checkout matches what we stored
-      if (paymentRequest.paymentIntentId && paymentRequest.paymentIntentId !== checkout) {
-        console.error('❌ CheckoutId no coincide:', checkout, 'vs', paymentRequest.paymentIntentId);
-        return res.status(400).json({ error: 'Checkout no válido' });
-      }
-      
-      const isApproved = message === 'APROBADA' || message === 'Approved';
-      
+      // Considerar aprobado si status es 'approved', 'success', 'completed' o 'APROBADA'
+      const isApproved = ['approved', 'success', 'completed', 'APROBADA', 'paid'].includes(
+        (status || '').toLowerCase()
+      );
+
       if (isApproved) {
-        console.log('✅ Pago aprobado por Billpocket - Authorization:', authorization);
-        
+        console.log('✅ Pago aprobado por Efipay - ID:', externalId);
+
         await storage.updatePaymentRequest(paymentRequest.id, {
           status: 'completed',
-          paymentIntentId: checkout || opId || 'bp-' + Date.now(),
-          paidAmount: total?.toString() || '0',
+          paymentIntentId: externalId,
+          paidAmount: amount?.toString() || '0',
           paidAt: new Date().toISOString()
         });
-        
+
         broadcastToAdmins({
           type: 'payment_confirmed',
           requestId: paymentRequest.id,
-          amount: parseFloat(total) || 0,
-          paymentIntentId: authorization || checkout
+          amount: parseFloat(amount) || 0,
+          paymentIntentId: externalId
         });
-        
-        // Notify connected user
+
         broadcastToUser(paymentRequest.id, {
           type: 'payment_result',
           success: true,
-          authorization: authorization,
+          authorization: externalId,
           message: 'Pago aprobado exitosamente'
         });
       } else {
-        console.error('❌ Pago rechazado por Billpocket:', message);
-        
+        console.error('❌ Pago rechazado por Efipay - status:', status, 'message:', message);
+
         await storage.updatePaymentRequest(paymentRequest.id, {
           status: 'rejected',
-          failureReason: message || 'Pago rechazado'
+          failureReason: message || status || 'Pago rechazado'
         });
-        
+
         broadcastToAdmins({
           type: 'payment_failed',
           requestId: paymentRequest.id,
-          reason: message || 'Pago rechazado'
+          reason: message || status || 'Pago rechazado'
         });
-        
+
         broadcastToUser(paymentRequest.id, {
           type: 'payment_result',
           success: false,
           message: message || 'Pago rechazado'
         });
       }
-      
+
       return res.status(200).json({ received: true });
     } catch (error: any) {
-      console.error('❌ Error procesando webhook de Billpocket:', error);
+      console.error('❌ Error procesando webhook de Efipay:', error);
       return res.status(500).json({ error: error.message });
     }
   });
 
-  // Billpocket redirect endpoint - user returns here after payment
-  app.get("/api/billpocket-return", async (req: Request, res: Response) => {
-    // Billpocket redirects the user here after payment
-    // The webhook will have already updated the status
-    console.log('🔄 Usuario retornó de Billpocket:', JSON.stringify(req.query));
-    res.redirect('/payment-success');
+  // Efipay redirect endpoint - el usuario vuelve aquí tras el pago
+  app.get("/api/efipay-return", async (req: Request, res: Response) => {
+    console.log('🔄 Usuario retornó de Efipay:', JSON.stringify(req.query));
+    const status = req.query.status;
+    if (status === 'success') {
+      res.redirect('/payment-success');
+    } else {
+      res.redirect('/?payment=failed');
+    }
   });
   
   // API routes

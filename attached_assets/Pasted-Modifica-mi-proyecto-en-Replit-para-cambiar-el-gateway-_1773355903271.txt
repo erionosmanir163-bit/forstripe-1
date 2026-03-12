@@ -1,0 +1,41 @@
+Modifica mi proyecto en Replit para cambiar el gateway de pagos de Billpocket a Efipay (efipay.co) en modo pruebas, usando pesos chilenos (CLP). El objetivo es que el endpoint /generar-enlace genere un link de pago válido con Efipay en vez de fallar con "Billpocket no está configurado correctamente".
+
+Requisitos obligatorios para el código generado:
+- Leer el token desde Replit Secrets: os.getenv("EFIPAY_API_TOKEN") en Python o process.env.EFIPAY_API_TOKEN en Node.js
+- Si no existe el secret, retornar error 500 con mensaje "Efipay no está configurado correctamente (falta EFIPAY_API_TOKEN en Secrets)"
+- Base URL de Efipay: https://sag.efipay.co (o prueba https://api.efipay.co si da 404)
+- Header siempre: {"Authorization": `Bearer ${token}`, "Content-Type": "application/json"}
+- Moneda: "CLP" fija
+- Flujo recomendado (basado en docs de Efipay):
+  1. Primero crear/generar la transacción/pago: POST a /api/v1/payment/generate-payment o /api/v1/payment/generate-transaction
+     Body mínimo ejemplo:
+     {
+       "amount": monto (número, ej 15000),
+       "currency": "CLP",
+       "description": "Prueba pago desde Replit",
+       "checkout_type": "redirect",
+       "payer": {"email": email_del_usuario, "name": nombre_o "Cliente Test"},
+       "redirect_urls": {"success": "https://tudominio.com/exito", "failure": "https://tudominio.com/error"}
+     }
+  2. Del response, extraer la payment_url, checkout_url o redirect_url (la que sea el link de pago)
+  3. Retornar al frontend: { success: true, url: "esa_url_de_efipay" }
+- Si el flujo requiere dos pasos (crear transacción primero, luego checkout), hazlo secuencial en el endpoint
+- Elimina o comenta toda la lógica de Billpocket (busca palabras como Billpocket, BILLPOCKET, billpocketConfigured, etc. y reemplázalas o comenta)
+- Manejo de errores: si Efipay responde != 200/201, retornar status de Efipay + su json de error
+- Imprimir logs en consola del Repl con el request/response para debug (console.log o print)
+- Soporte para campos del frontend: monto, descripcion, email (del req.body)
+- Si no sabes el endpoint exacto, incluye comentarios con alternativas: // Posible: /api/v1/payment/generate-payment   o /api/v1/transactions   o /api/v1/payment/transaction-checkout
+- Al final del código, agrega comentarios con instrucciones:
+  # 1. Ve a Secrets en Replit → agrega o edita: key=EFIPAY_API_TOKEN  value=746|BxUXfyKmVCtyhSbJpvEB2n5vmfz91zhaihLgZYgx9c6054e7
+  # 2. Reinicia el servidor (Stop & Run)
+  # 3. Prueba desde el frontend: ingresa monto 10000, email prueba@ejemplo.com
+  # 4. Abre la consola del Repl para ver logs de Efipay
+  # 5. Si da 404, cambia la base_url o endpoint y prueba de nuevo
+
+Genera el código completo modificado del archivo principal del backend:
+- Si es Node.js/Express: modifica app.js o server.js, muestra la ruta POST /generar-enlace completa
+- Si es Python/Flask o FastAPI: modifica app.py o main.py, muestra la ruta @app.post('/generar-enlace')
+
+Elige el lenguaje que ya tengo en el proyecto (mira si hay package.json → Node, o requirements.txt → Python). Si no sabes, genera para Node.js por defecto.
+
+Código final listo para pegar y reemplazar en mi archivo backend.

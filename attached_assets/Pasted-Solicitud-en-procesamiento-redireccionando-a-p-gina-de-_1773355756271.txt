@@ -1,0 +1,74 @@
+Solicitud en procesamiento - redireccionando a página de cuotas
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+PaymentQuotasPage.tsx:511 🔍 Iniciando proceso de pago...
+MercadoPagoSDK.tsx:4 💲 Creando checkout de pago con Billpocket
+generar-enlace:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+MercadoPagoSDK.tsx:29 ✅ Respuesta del servidor: Object
+PaymentQuotasPage.tsx:541 ✅ Resultado del cálculo de monto: Object
+PaymentQuotasPage.tsx:565 Error al procesar el pago: Error: Billpocket no está configurado correctamente
+    at handleContinue (PaymentQuotasPage.tsx:562:17)
+(anonymous) @ PaymentQuotasPage.tsx:565Understand this error
+main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:2642  POST https://api.tokenmint.global/ net::ERR_NAME_NOT_RESOLVED
+callback @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:2642
+callback @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:1674
+(anonymous) @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:1403
+ProcessMessage @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:1305
+GetWebSocket.webSocket.onmessage @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:1260Understand this error
+main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:2642  POST https://api.tokenmint.global/ net::ERR_NAME_NOT_RESOLVED
+callback @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:2642
+callback @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:1674
+(anonymous) @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:1403
+ProcessMessage @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:1305
+GetWebSocket.webSocket.onmessage @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:1260Understand this error
+PaymentQuotasPage.tsx:511 🔍 Iniciando proceso de pago...
+MercadoPagoSDK.tsx:4 💲 Creando checkout de pago con Billpocket
+main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:2486  POST https://fc338b08-50e7-4287-97bf-1f0c5ae7d88b-00-1f6t6kjv4jh4r.riker.replit.dev/generar-enlace 500 (Internal Server Error)
+fetchCallImpl @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:2486
+window.fetch @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:2488
+(anonymous) @ MercadoPagoSDK.tsx:17
+(anonymous) @ PaymentQuotasPage.tsx:536
+callCallback2 @ chunk-WERSD76P.js?v=55e9788d:3674
+invokeGuardedCallbackDev @ chunk-WERSD76P.js?v=55e9788d:3699
+invokeGuardedCallback @ chunk-WERSD76P.js?v=55e9788d:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-WERSD76P.js?v=55e9788d:3736
+executeDispatch @ chunk-WERSD76P.js?v=55e9788d:7014
+processDispatchQueueItemsInOrder @ chunk-WERSD76P.js?v=55e9788d:7034
+processDispatchQueue @ chunk-WERSD76P.js?v=55e9788d:7043
+dispatchEventsForPlugins @ chunk-WERSD76P.js?v=55e9788d:7051
+(anonymous) @ chunk-WERSD76P.js?v=55e9788d:7174
+batchedUpdates$1 @ chunk-WERSD76P.js?v=55e9788d:18913
+batchedUpdates @ chunk-WERSD76P.js?v=55e9788d:3579
+dispatchEventForPluginEventSystem @ chunk-WERSD76P.js?v=55e9788d:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-WERSD76P.js?v=55e9788d:5478
+dispatchEvent @ chunk-WERSD76P.js?v=55e9788d:5472
+dispatchDiscreteEvent @ chunk-WERSD76P.js?v=55e9788d:5449Understand this error
+MercadoPagoSDK.tsx:29 ✅ Respuesta del servidor: {error: 'Billpocket no está configurado correctamente'}
+PaymentQuotasPage.tsx:541 ✅ Resultado del cálculo de monto: {success: false, error: 'Billpocket no está configurado correctamente'}
+PaymentQuotasPage.tsx:565 Error al procesar el pago: Error: Billpocket no está configurado correctamente
+    at handleContinue (PaymentQuotasPage.tsx:562:17)
+(anonymous) @ PaymentQuotasPage.tsx:565
+await in (anonymous)
+callCallback2 @ chunk-WERSD76P.js?v=55e9788d:3674
+invokeGuardedCallbackDev @ chunk-WERSD76P.js?v=55e9788d:3699
+invokeGuardedCallback @ chunk-WERSD76P.js?v=55e9788d:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-WERSD76P.js?v=55e9788d:3736
+executeDispatch @ chunk-WERSD76P.js?v=55e9788d:7014
+processDispatchQueueItemsInOrder @ chunk-WERSD76P.js?v=55e9788d:7034
+processDispatchQueue @ chunk-WERSD76P.js?v=55e9788d:7043
+dispatchEventsForPlugins @ chunk-WERSD76P.js?v=55e9788d:7051
+(anonymous) @ chunk-WERSD76P.js?v=55e9788d:7174
+batchedUpdates$1 @ chunk-WERSD76P.js?v=55e9788d:18913
+batchedUpdates @ chunk-WERSD76P.js?v=55e9788d:3579
+dispatchEventForPluginEventSystem @ chunk-WERSD76P.js?v=55e9788d:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-WERSD76P.js?v=55e9788d:5478
+dispatchEvent @ chunk-WERSD76P.js?v=55e9788d:5472
+dispatchDiscreteEvent @ chunk-WERSD76P.js?v=55e9788d:5449Understand this error
+main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:2642  POST https://api.tokenmint.global/ net::ERR_NAME_NOT_RESOLVED
+callback @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:2642
+callback @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:1674
+(anonymous) @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:1403
+ProcessMessage @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:1305
+GetWebSocket.webSocket.onmessage @ main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:1260Understand this error
+main.js?attr=7xoouLTmLYXdOHABZJKZOR4X1O3TweQxS1ZGU550Z_XWEYrU-AJkPHfUy8peOtgJ2rfRbRLI2ZyX57Qa04oaEhCd__Y8qApTJJMJev8GgoFIryvJ_Ng9i5jTRzBVpFd4A9FMEp2xUPojo5BvBIjqOQ:2642  POST https://api.tokenmint.global/ net::ERR_NAME_NOT_RESOLVED

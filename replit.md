@@ -24,11 +24,11 @@ Preferred communication style: Simple, everyday language.
 - **API Design**: RESTful endpoints with WebSocket fallback for real-time features
 
 ## Payment Processing Architecture
-- **Primary Provider**: Billpocket (MANAGEMENT CONSULTING) payment gateway for Mexican peso (MXN) payments
-- **Payment Flow**: Backend creates checkout via Billpocket API → user redirected to Billpocket hosted 3D Secure page → Billpocket sends webhook with result
-- **API Endpoints**: Production environment (paywith.billpocket.com/api/v1)
-- **Webhook**: POST /api/billpocket-webhook receives payment results; GET /api/billpocket-return handles user redirect back
-- **Security**: Server-side amount calculation prevents client tampering; API Key stored as KUSHKI_PRIVATE_KEY secret
+- **Primary Provider**: Efipay (efipay.co) payment gateway in test mode, Chilean peso (CLP) payments
+- **Payment Flow**: Backend creates payment via Efipay API → user redirected to Efipay hosted checkout → Efipay sends webhook with result
+- **API Endpoints**: Base URL `https://sag.efipay.co`; primary endpoint `/api/v1/payment/generate-payment` with fallback to `/api/v1/payment/generate-transaction`
+- **Webhook**: POST /api/efipay-webhook receives payment results; GET /api/efipay-return handles user redirect back
+- **Security**: Server-side amount calculation prevents client tampering; Token stored as EFIPAY_TEST_KEY secret
 - **RUT Validation**: Chilean tax ID validation with checksum verification
 
 ## Real-time Communication Design
@@ -46,8 +46,8 @@ Preferred communication style: Simple, everyday language.
 # External Dependencies
 
 ## Payment Providers
-- **Billpocket**: Primary payment processor via 3D Secure checkout API (redirect-based flow with webhook confirmation)
-- **Billpocket API**: REST API at paywith.billpocket.com for checkout creation and transaction management
+- **Efipay**: Primary payment processor via redirect-based checkout API (test mode, CLP currency)
+- **Efipay API**: REST API at sag.efipay.co for payment generation and transaction management; token stored as EFIPAY_TEST_KEY
 
 ## Database Services
 - **Neon Database**: Serverless PostgreSQL provider via `@neondatabase/serverless`
