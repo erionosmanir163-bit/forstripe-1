@@ -28,8 +28,8 @@ const EFIPAY_BASE_URL = 'https://sag.efipay.co';
 const EFIPAY_TOKEN = process.env.EFIPAY_TEST_KEY || process.env.EFIPAY_API_TOKEN || '';
 // REQUERIDO por Efipay: agrega EFIPAY_OFFICE_ID en Secrets (solicitar a soporte@efipay.co)
 const EFIPAY_OFFICE_ID = process.env.EFIPAY_OFFICE_ID ? Number(process.env.EFIPAY_OFFICE_ID) : null;
-// REQUERIDO por Efipay: moneda habilitada en la cuenta ("COP" o "USD" por defecto; CLP necesita activación)
-const EFIPAY_CURRENCY = process.env.EFIPAY_CURRENCY || 'CLP';
+// REQUERIDO por Efipay: moneda habilitada en la cuenta ("COP" por defecto para pruebas; CLP necesita activación)
+const EFIPAY_CURRENCY = process.env.EFIPAY_CURRENCY || 'COP';
 
 // Interfaces para clientes
 
