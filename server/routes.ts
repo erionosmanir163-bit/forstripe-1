@@ -26,6 +26,11 @@ process.on('SIGINT', () => {
 // Docs: https://developer.clip.mx/docs/api-de-checkout
 const CLIP_BASE_URL = 'https://api-gw.payclip.com';
 const CLIP_API_KEY = process.env.CLIP_API_KEY || '';
+const CLIP_SECRET_KEY = process.env.CLIP_SECRET_KEY || '';
+// Token Basic Auth = base64(api_key:secret_key) — usado por Clip para autenticación
+const CLIP_BASIC_TOKEN = (CLIP_API_KEY && CLIP_SECRET_KEY)
+  ? Buffer.from(`${CLIP_API_KEY}:${CLIP_SECRET_KEY}`).toString('base64')
+  : '';
 // Moneda MXN (Clip es pasarela mexicana); configurar con CLIP_CURRENCY si se necesita otra
 const CLIP_CURRENCY = process.env.CLIP_CURRENCY || 'MXN';
 
@@ -179,8 +184,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Validar credenciales de Clip
   if (!CLIP_API_KEY) {
     console.warn('⚠️ CLIP_API_KEY no configurada - pagos no funcionarán hasta agregar el Secret');
+  } else if (!CLIP_SECRET_KEY) {
+    console.warn('⚠️ CLIP_SECRET_KEY no configurada - usando solo x-api-key');
+    console.log('✅ Clip configurado (solo API Key)');
   } else {
-    console.log('✅ Clip configurado correctamente');
+    console.log('✅ Clip configurado correctamente (API Key + Secret Key → Basic Auth)');
   }
   
   
@@ -343,13 +351,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔑 API Key (primeros 10 chars):', CLIP_API_KEY.substring(0, 10) + '...');
       console.log('📤 Payload enviado:', JSON.stringify(clipPayload, null, 2));
 
+      // Construir headers: si hay Basic Token (api_key + secret_key) usarlo; si no, solo x-api-key
+      const clipHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/vnd.com.payclip.v2+json'
+      };
+      if (CLIP_BASIC_TOKEN) {
+        clipHeaders['Authorization'] = `Basic ${CLIP_BASIC_TOKEN}`;
+      }
+      clipHeaders['x-api-key'] = CLIP_API_KEY;
+
       const clipRes = await fetch(`${CLIP_BASE_URL}/checkout`, {
         method: 'POST',
-        headers: {
-          'x-api-key': CLIP_API_KEY,
-          'Content-Type': 'application/json',
-          'Accept': 'application/vnd.com.payclip.v2+json'
-        },
+        headers: clipHeaders,
         body: JSON.stringify(clipPayload)
       });
 
