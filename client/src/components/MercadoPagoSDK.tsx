@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 export async function createPreference(paymentData: any) {
-  console.log('💲 Creando enlace de pago con Efipay...');
+  console.log('💲 Creando enlace de pago con Clip...');
   
   try {
     const { requestId, selectedQuotaIndices } = paymentData;

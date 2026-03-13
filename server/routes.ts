@@ -22,16 +22,12 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-// Efipay API configuration
-// Base URL: https://sag.efipay.co (alternativa: https://api.efipay.co)
-const EFIPAY_BASE_URL = 'https://sag.efipay.co';
-const EFIPAY_TOKEN = process.env.EFIPAY_TEST_KEY || process.env.EFIPAY_API_TOKEN || '';
-// REQUERIDO por Efipay: agrega EFIPAY_OFFICE_ID en Secrets (solicitar a soporte@efipay.co)
-const EFIPAY_OFFICE_ID = process.env.EFIPAY_OFFICE_ID ? Number(process.env.EFIPAY_OFFICE_ID) : null;
-// REQUERIDO por Efipay: moneda habilitada en la cuenta ("COP" por defecto para pruebas; CLP necesita activación)
-const EFIPAY_CURRENCY = process.env.EFIPAY_CURRENCY || 'COP';
-// Token para verificar webhooks entrantes de Efipay
-const EFIPAY_WEBHOOK_TOKEN = process.env.EFIPAY_WEBHOOK_TOKEN || '';
+// Clip API configuration
+// Docs: https://developer.clip.mx/docs/api-de-checkout
+const CLIP_BASE_URL = 'https://api-gw.payclip.com';
+const CLIP_API_KEY = process.env.CLIP_API_KEY || '';
+// Moneda MXN (Clip es pasarela mexicana); configurar con CLIP_CURRENCY si se necesita otra
+const CLIP_CURRENCY = process.env.CLIP_CURRENCY || 'MXN';
 
 // Interfaces para clientes
 
@@ -128,7 +124,7 @@ function broadcastToUser(requestId: string, payload: any) {
 
 // Webhook setup for backward compatibility with server/index.ts
 export function setupStripeWebhook(_app: any) {
-  console.log('ℹ️ Efipay webhook configurado en /api/efipay-webhook');
+  console.log('ℹ️ Clip webhook configurado en /api/clip-webhook');
 }
 
 // DEBUG: Create a test payment request
@@ -180,11 +176,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Habilitamos CORS para todas las rutas
   app.use(cors());
   
-  // Validar credenciales de Efipay
-  if (!EFIPAY_TOKEN) {
-    console.warn('⚠️ EFIPAY_TEST_KEY no configurada - pagos no funcionarán');
+  // Validar credenciales de Clip
+  if (!CLIP_API_KEY) {
+    console.warn('⚠️ CLIP_API_KEY no configurada - pagos no funcionarán hasta agregar el Secret');
   } else {
-    console.log('✅ Efipay configurado correctamente (modo pruebas CLP)');
+    console.log('✅ Clip configurado correctamente');
   }
   
   
@@ -316,117 +312,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`💲 Total calculado server-side: $${totalAmount.toLocaleString('es-CL')} CLP`);
-      
-      // Crear pago en Efipay (modo pruebas, CLP)
-      if (!EFIPAY_TOKEN) {
-        return res.status(500).json({ error: 'Efipay no está configurado correctamente (falta EFIPAY_TEST_KEY en Secrets)' });
+
+      // Crear pago en Clip
+      if (!CLIP_API_KEY) {
+        return res.status(500).json({ error: 'Clip no está configurado (falta CLIP_API_KEY en Secrets)' });
       }
 
-      // Obtener email del pagador desde la solicitud
-      const payerEmail = paymentRequest.email || 'pagador@ejemplo.com';
-      const payerName = paymentRequest.rut || 'Cliente';
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const description = (itemDescriptions.join(', ') || 'Pago cuota préstamo vehicular').substring(0, 250);
 
-      const efipayHeaders = {
-        'Authorization': `Bearer ${EFIPAY_TOKEN}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      };
-
-      // Advertir si falta office ID
-      if (!EFIPAY_OFFICE_ID) {
-        console.warn('⚠️ EFIPAY_OFFICE_ID no configurado. Solicitar ID de sucursal a soporte@efipay.co y agregar como Secret.');
-      }
-
-      const efipayPayload: Record<string, any> = {
-        payment: {
-          amount: totalAmount,
-          currency_type: EFIPAY_CURRENCY,   // variable configurable; CLP requiere activación por Efipay
-          description: itemDescriptions.join(', ') || 'Pago cuota préstamo vehicular',
-          checkout_type: 'redirect'
+      const clipPayload = {
+        amount: totalAmount,
+        currency: CLIP_CURRENCY,
+        purchase_description: description,
+        redirection_url: {
+          success: `${baseUrl}/api/clip-return?status=success&ref=${idempotencyKey}`,
+          error:   `${baseUrl}/api/clip-return?status=error&ref=${idempotencyKey}`,
+          default: `${baseUrl}/api/clip-return?status=default&ref=${idempotencyKey}`
         },
-        payer: {
-          email: payerEmail,
-          name: payerName
-        },
-        redirect_urls: {
-          success: `${req.protocol}://${req.get('host')}/api/efipay-return?status=success`,
-          failure: `${req.protocol}://${req.get('host')}/api/efipay-return?status=failure`
-        },
-        reference: idempotencyKey
-      };
-
-      // Incluir office solo si está configurado
-      if (EFIPAY_OFFICE_ID) {
-        efipayPayload.office = EFIPAY_OFFICE_ID;
-      }
-
-      console.log('🔄 Creando pago en Efipay...');
-      console.log('🌐 Endpoint:', `${EFIPAY_BASE_URL}/api/v1/payment/generate-payment`);
-      console.log('🔑 Token (primeros 10 chars):', EFIPAY_TOKEN.substring(0, 10) + '...');
-      console.log('📤 Payload enviado:', JSON.stringify(efipayPayload, null, 2));
-
-      // Helper para llamar Efipay con reintentos de endpoint
-      async function callEfipayGeneratePayment(endpoint: string): Promise<{ status: number; data: any }> {
-        const r = await fetch(`${EFIPAY_BASE_URL}${endpoint}`, {
-          method: 'POST',
-          headers: efipayHeaders,
-          body: JSON.stringify(efipayPayload)
-        });
-        const data = await r.json() as any;
-        console.log(`📦 Efipay ${endpoint} → status ${r.status}:`, JSON.stringify(data, null, 2));
-        return { status: r.status, data };
-      }
-
-      // Paso 1: intentar generate-payment, si da 404 intentar generate-transaction
-      let step1 = await callEfipayGeneratePayment('/api/v1/payment/generate-payment');
-      if (step1.status === 404) {
-        console.log('⚠️ /generate-payment dio 404, intentando /generate-transaction...');
-        step1 = await callEfipayGeneratePayment('/api/v1/payment/generate-transaction');
-      }
-
-      if (step1.status !== 200 && step1.status !== 201) {
-        return res.status(step1.status).json({
-          success: false,
-          error: step1.data?.message || step1.data?.error || 'Error al crear pago en Efipay',
-          efipay_response: step1.data
-        });
-      }
-
-      const step1Data = step1.data;
-      const paymentId = step1Data.payment_id || step1Data.transaction_id || step1Data.id || idempotencyKey;
-
-      // Extraer URL directamente del paso 1 si viene en la respuesta
-      let checkoutUrl: string | null =
-        step1Data.payment_url || step1Data.checkout_url || step1Data.redirect_url || step1Data.url || null;
-
-      // Paso 2: si no hay URL pero hay id → hacer transaction-checkout
-      if (!checkoutUrl && step1Data.id) {
-        console.log('🔄 Sin URL en paso 1, llamando /transaction-checkout con id:', step1Data.id);
-        const checkoutPayload = { payment: { id: step1Data.id } };
-        const checkoutRes = await fetch(`${EFIPAY_BASE_URL}/api/v1/payment/transaction-checkout`, {
-          method: 'POST',
-          headers: efipayHeaders,
-          body: JSON.stringify(checkoutPayload)
-        });
-        const checkoutData = await checkoutRes.json() as any;
-        console.log('📦 transaction-checkout → status', checkoutRes.status, ':', JSON.stringify(checkoutData, null, 2));
-
-        if (!checkoutRes.ok) {
-          return res.status(checkoutRes.status).json({
-            success: false,
-            error: checkoutData?.message || checkoutData?.error || 'Error en checkout step',
-            efipay_response: checkoutData
-          });
+        webhook_url: `${baseUrl}/api/clip-webhook`,
+        metadata: {
+          request_id: requestId,
+          reference: idempotencyKey,
+          rut: paymentRequest.rut || ''
         }
-        checkoutUrl = checkoutData.payment_url || checkoutData.checkout_url || checkoutData.redirect_url || checkoutData.url || null;
+      };
+
+      console.log('🔄 Creando pago en Clip...');
+      console.log('🌐 Endpoint:', `${CLIP_BASE_URL}/checkout`);
+      console.log('🔑 API Key (primeros 10 chars):', CLIP_API_KEY.substring(0, 10) + '...');
+      console.log('📤 Payload enviado:', JSON.stringify(clipPayload, null, 2));
+
+      const clipRes = await fetch(`${CLIP_BASE_URL}/checkout`, {
+        method: 'POST',
+        headers: {
+          'x-api-key': CLIP_API_KEY,
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.com.payclip.v2+json'
+        },
+        body: JSON.stringify(clipPayload)
+      });
+
+      const clipData = await clipRes.json() as any;
+      console.log(`📦 Clip /checkout → status ${clipRes.status}:`, JSON.stringify(clipData, null, 2));
+
+      if (!clipRes.ok) {
+        return res.status(clipRes.status).json({
+          success: false,
+          error: clipData?.message || clipData?.detail || 'Error al crear pago en Clip',
+          clip_response: clipData
+        });
       }
+
+      const checkoutUrl: string = clipData.payment_request_url;
+      const paymentId: string = clipData.payment_request_id || idempotencyKey;
 
       if (!checkoutUrl) {
-        console.error('❌ Efipay no devolvió URL de pago en ningún paso. Respuesta:', JSON.stringify(step1Data));
+        console.error('❌ Clip no devolvió URL de pago. Respuesta:', JSON.stringify(clipData));
         return res.status(500).json({
           success: false,
-          error: 'Efipay no devolvió una URL de pago válida',
-          efipay_response: step1Data
+          error: 'Clip no devolvió una URL de pago válida',
+          clip_response: clipData
         });
       }
 
@@ -439,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('❌ Error guardando paymentId:', dbError);
       }
 
-      console.log('✅ Pago creado exitosamente en Efipay:', checkoutUrl);
+      console.log('✅ Pago creado exitosamente en Clip:', checkoutUrl);
       return res.json({ success: true, checkoutUrl, checkoutId: paymentId, amount: totalAmount });
       
     } catch (error: any) {
@@ -453,67 +399,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Efipay webhook endpoint - recibe resultados de pago
-  app.post("/api/efipay-webhook", async (req: Request, res: Response) => {
+  // Clip webhook endpoint - recibe resultados de pago
+  // Clip envía el evento cuando el estado del checkout cambia
+  app.post("/api/clip-webhook", async (req: Request, res: Response) => {
     try {
-      // Verificar token de webhook (Efipay lo puede enviar en header o query param)
-      const incomingToken =
-        req.headers['x-webhook-token'] as string ||
-        req.headers['x-efipay-token'] as string ||
-        req.query.token as string ||
-        req.body?.token;
-
-      if (EFIPAY_WEBHOOK_TOKEN && incomingToken !== EFIPAY_WEBHOOK_TOKEN) {
-        console.warn('⚠️ Webhook con token inválido rechazado. Recibido:', incomingToken);
-        return res.status(401).json({ error: 'Token de webhook inválido' });
-      }
-
       const webhookData = req.body;
-      console.log('📩 Webhook de Efipay recibido:', JSON.stringify(webhookData));
+      console.log('📩 Webhook de Clip recibido:', JSON.stringify(webhookData));
 
-      // Efipay puede enviar distintos campos según versión de API
+      // Clip envía: payment_request_id, status, metadata, amount, etc.
       const {
-        external_id,
-        payment_id,
-        transaction_id,
+        payment_request_id,
         status,
         amount,
-        message
+        metadata
       } = webhookData;
 
-      const externalId = external_id || payment_id || transaction_id;
+      // Recuperar referencia desde metadata o desde payment_request_id guardado
+      const reference: string = metadata?.reference || payment_request_id || '';
+      const requestId: string = metadata?.request_id || reference.split('-')[0] || '';
 
-      if (!externalId) {
-        console.error('❌ Webhook inválido - falta external_id / payment_id');
-        return res.status(400).json({ error: 'campos requeridos faltantes' });
+      if (!requestId) {
+        console.error('❌ Webhook Clip inválido - no se pudo determinar requestId');
+        return res.status(400).json({ error: 'requestId no encontrado en webhook' });
       }
-
-      // external_id format: requestId-quotaIndices
-      const requestId = externalId.split('-')[0];
 
       let paymentRequest = await storage.getPaymentRequest(requestId);
 
       if (!paymentRequest) {
         const allRequests = await storage.getAllPaymentRequests();
-        paymentRequest = allRequests.find(r => r.paymentIntentId === externalId) || undefined;
+        paymentRequest = allRequests.find(r => r.paymentIntentId === payment_request_id) || undefined;
       }
 
       if (!paymentRequest) {
-        console.error('❌ Solicitud no encontrada para:', externalId);
+        console.error('❌ Solicitud no encontrada para requestId:', requestId);
         return res.status(404).json({ error: 'Solicitud no encontrada' });
       }
 
-      // Considerar aprobado si status es 'approved', 'success', 'completed' o 'APROBADA'
-      const isApproved = ['approved', 'success', 'completed', 'APROBADA', 'paid'].includes(
-        (status || '').toLowerCase()
-      );
+      // Clip estados de éxito: CHECKOUT_COMPLETED
+      const isApproved = (status || '').toUpperCase() === 'CHECKOUT_COMPLETED';
+      // Clip estados de fallo: CHECKOUT_CANCELLED, CHECKOUT_EXPIRED
+      const isFailed = ['CHECKOUT_CANCELLED', 'CHECKOUT_EXPIRED'].includes((status || '').toUpperCase());
 
       if (isApproved) {
-        console.log('✅ Pago aprobado por Efipay - ID:', externalId);
+        console.log('✅ Pago aprobado por Clip - ID:', payment_request_id);
 
         await storage.updatePaymentRequest(paymentRequest.id, {
           status: 'completed',
-          paymentIntentId: externalId,
+          paymentIntentId: payment_request_id,
           paidAmount: amount?.toString() || '0',
           paidAt: new Date().toISOString()
         });
@@ -522,46 +454,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: 'payment_confirmed',
           requestId: paymentRequest.id,
           amount: parseFloat(amount) || 0,
-          paymentIntentId: externalId
+          paymentIntentId: payment_request_id
         });
 
         broadcastToUser(paymentRequest.id, {
           type: 'payment_result',
           success: true,
-          authorization: externalId,
+          authorization: payment_request_id,
           message: 'Pago aprobado exitosamente'
         });
-      } else {
-        console.error('❌ Pago rechazado por Efipay - status:', status, 'message:', message);
+      } else if (isFailed) {
+        console.error('❌ Pago rechazado/expirado por Clip - status:', status);
 
         await storage.updatePaymentRequest(paymentRequest.id, {
           status: 'rejected',
-          failureReason: message || status || 'Pago rechazado'
+          failureReason: status || 'Pago rechazado'
         });
 
         broadcastToAdmins({
           type: 'payment_failed',
           requestId: paymentRequest.id,
-          reason: message || status || 'Pago rechazado'
+          reason: status || 'Pago rechazado'
         });
 
         broadcastToUser(paymentRequest.id, {
           type: 'payment_result',
           success: false,
-          message: message || 'Pago rechazado'
+          message: status === 'CHECKOUT_EXPIRED' ? 'El enlace de pago expiró' : 'Pago cancelado'
         });
+      } else {
+        console.log('ℹ️ Clip webhook con estado intermedio:', status, '- sin acción');
       }
 
       return res.status(200).json({ received: true });
     } catch (error: any) {
-      console.error('❌ Error procesando webhook de Efipay:', error);
+      console.error('❌ Error procesando webhook de Clip:', error);
       return res.status(500).json({ error: error.message });
     }
   });
 
-  // Efipay redirect endpoint - el usuario vuelve aquí tras el pago
-  app.get("/api/efipay-return", async (req: Request, res: Response) => {
-    console.log('🔄 Usuario retornó de Efipay:', JSON.stringify(req.query));
+  // Clip redirect endpoint - el usuario vuelve aquí tras el pago
+  app.get("/api/clip-return", async (req: Request, res: Response) => {
+    console.log('🔄 Usuario retornó de Clip:', JSON.stringify(req.query));
     const status = req.query.status;
     if (status === 'success') {
       res.redirect('/payment-success');

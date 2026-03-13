@@ -1,6 +1,6 @@
 # Overview
 
-This is a Chilean payment system application built with React/TypeScript frontend and Node.js/Express backend. The application enables users to submit payment requests for vehicle loan quotas by entering their Chilean RUT (tax ID), which are then processed by administrators through a real-time admin panel. The system includes Chilean RUT validation, WebSocket-based real-time communication, and integration with Billpocket (MANAGEMENT CONSULTING) payment gateway for payment processing.
+This is a Chilean payment system application built with React/TypeScript frontend and Node.js/Express backend. The application enables users to submit payment requests for vehicle loan quotas by entering their Chilean RUT (tax ID), which are then processed by administrators through a real-time admin panel. The system includes Chilean RUT validation, WebSocket-based real-time communication, and integration with Clip (clip.mx) payment gateway for payment processing.
 
 # User Preferences
 
@@ -24,11 +24,11 @@ Preferred communication style: Simple, everyday language.
 - **API Design**: RESTful endpoints with WebSocket fallback for real-time features
 
 ## Payment Processing Architecture
-- **Primary Provider**: Efipay (efipay.co) payment gateway in test mode, Chilean peso (CLP) payments
-- **Payment Flow**: Backend creates payment via Efipay API → user redirected to Efipay hosted checkout → Efipay sends webhook with result
-- **API Endpoints**: Base URL `https://sag.efipay.co`; primary endpoint `/api/v1/payment/generate-payment` with fallback to `/api/v1/payment/generate-transaction`
-- **Webhook**: POST /api/efipay-webhook receives payment results; GET /api/efipay-return handles user redirect back
-- **Security**: Server-side amount calculation prevents client tampering; Token stored as EFIPAY_TEST_KEY secret
+- **Primary Provider**: Clip (clip.mx) payment gateway, MXN currency (CLIP_CURRENCY env var configurable)
+- **Payment Flow**: Backend creates checkout link via Clip API → user redirected to Clip hosted checkout → Clip sends webhook with result
+- **API Endpoints**: Base URL `https://api-gw.payclip.com`; endpoint `POST /checkout`; auth via `x-api-key` header
+- **Webhook**: POST /api/clip-webhook receives payment results; GET /api/clip-return handles user redirect back
+- **Security**: Server-side amount calculation prevents client tampering; API key stored as CLIP_API_KEY secret
 - **RUT Validation**: Chilean tax ID validation with checksum verification
 
 ## Real-time Communication Design
@@ -46,8 +46,8 @@ Preferred communication style: Simple, everyday language.
 # External Dependencies
 
 ## Payment Providers
-- **Efipay**: Primary payment processor via redirect-based checkout API (test mode, CLP currency)
-- **Efipay API**: REST API at sag.efipay.co for payment generation and transaction management; token stored as EFIPAY_TEST_KEY
+- **Clip**: Primary payment processor via redirect-based checkout API (clip.mx, MXN currency)
+- **Clip API**: REST API at api-gw.payclip.com; POST /checkout to create payment link; auth via x-api-key header; key stored as CLIP_API_KEY secret
 
 ## Database Services
 - **Neon Database**: Serverless PostgreSQL provider via `@neondatabase/serverless`
