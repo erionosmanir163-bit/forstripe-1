@@ -54,3 +54,4 @@ integrations = ["javascript_stripe:1.0.0"]
 
 [userenv.shared]
 EFIPAY_API_TOKEN = "746|BxUXfyKmVCtyhSbJpvEB2n5vmfz91zhaihLgZYgx9c6054e7"
+EFIPAY_OFFICE_ID = "3798"
