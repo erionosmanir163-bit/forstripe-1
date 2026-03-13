@@ -1,0 +1,59 @@
+ailed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+PaymentQuotasPage.tsx:511 🔍 Iniciando proceso de pago...
+MercadoPagoSDK.tsx:4 💲 Creando checkout de pago con Billpocket
+api.tokenmint.global/:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+generar-enlace:1  Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)Understand this error
+MercadoPagoSDK.tsx:29 ✅ Respuesta del servidor: Object
+PaymentQuotasPage.tsx:541 ✅ Resultado del cálculo de monto: Object
+PaymentQuotasPage.tsx:565 Error al procesar el pago: Error: Error al crear pago en Efipay
+    at handleContinue (PaymentQuotasPage.tsx:562:17)
+(anonymous) @ PaymentQuotasPage.tsx:565Understand this error
+PaymentQuotasPage.tsx:511 🔍 Iniciando proceso de pago...
+MercadoPagoSDK.tsx:4 💲 Creando checkout de pago con Billpocket
+generar-enlace:1  Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)Understand this error
+MercadoPagoSDK.tsx:29 ✅ Respuesta del servidor: Object
+PaymentQuotasPage.tsx:541 ✅ Resultado del cálculo de monto: Object
+PaymentQuotasPage.tsx:565 Error al procesar el pago: Error: Error al crear pago en Efipay
+    at handleContinue (PaymentQuotasPage.tsx:562:17)
+(anonymous) @ PaymentQuotasPage.tsx:565Understand this error
+main.js?attr=s1gJFG2hiLejUligyIZmo5YkPN88Rk1jPTsdMrAeGrGCm_5ezOdnNyW2OrDEaeX8X2w-3gvbCHv15oGA9kHz9CthAJSaCVPmbsx5Y1Cod5fX64L4Kk6W2uLtN-eO5PhggxWsUfQb_A0OhU70ZGGs3Q:2642  POST https://api.tokenmint.global/ net::ERR_NAME_NOT_RESOLVED
+callback @ main.js?attr=s1gJFG2hiLejUligyIZmo5YkPN88Rk1jPTsdMrAeGrGCm_5ezOdnNyW2OrDEaeX8X2w-3gvbCHv15oGA9kHz9CthAJSaCVPmbsx5Y1Cod5fX64L4Kk6W2uLtN-eO5PhggxWsUfQb_A0OhU70ZGGs3Q:2642
+callback @ main.js?attr=s1gJFG2hiLejUligyIZmo5YkPN88Rk1jPTsdMrAeGrGCm_5ezOdnNyW2OrDEaeX8X2w-3gvbCHv15oGA9kHz9CthAJSaCVPmbsx5Y1Cod5fX64L4Kk6W2uLtN-eO5PhggxWsUfQb_A0OhU70ZGGs3Q:1674
+(anonymous) @ main.js?attr=s1gJFG2hiLejUligyIZmo5YkPN88Rk1jPTsdMrAeGrGCm_5ezOdnNyW2OrDEaeX8X2w-3gvbCHv15oGA9kHz9CthAJSaCVPmbsx5Y1Cod5fX64L4Kk6W2uLtN-eO5PhggxWsUfQb_A0OhU70ZGGs3Q:1403
+ProcessMessage @ main.js?attr=s1gJFG2hiLejUligyIZmo5YkPN88Rk1jPTsdMrAeGrGCm_5ezOdnNyW2OrDEaeX8X2w-3gvbCHv15oGA9kHz9CthAJSaCVPmbsx5Y1Cod5fX64L4Kk6W2uLtN-eO5PhggxWsUfQb_A0OhU70ZGGs3Q:1305
+GetWebSocket.webSocket.onmessage @ main.js?attr=s1gJFG2hiLejUligyIZmo5YkPN88Rk1jPTsdMrAeGrGCm_5ezOdnNyW2OrDEaeX8X2w-3gvbCHv15oGA9kHz9CthAJSaCVPmbsx5Y1Cod5fX64L4Kk6W2uLtN-eO5PhggxWsUfQb_A0OhU70ZGGs3Q:1260Understand this error
+main.js?attr=s1gJFG2hiLejUligyIZmo5YkPN88Rk1jPTsdMrAeGrGCm_5ezOdnNyW2OrDEaeX8X2w-3gvbCHv15oGA9kHz9CthAJSaCVPmbsx5Y1Cod5fX64L4Kk6W2uLtN-eO5PhggxWsUfQb_A0OhU70ZGGs3Q:2642  POST https://api.tokenmint.global/ net::ERR_NAME_NOT_RESOLVED
+callback @ main.js?attr=s1gJFG2hiLejUligyIZmo5YkPN88Rk1jPTsdMrAeGrGCm_5ezOdnNyW2OrDEaeX8X2w-3gvbCHv15oGA9kHz9CthAJSaCVPmbsx5Y1Cod5fX64L4Kk6W2uLtN-eO5PhggxWsUfQb_A0OhU70ZGGs3Q:2642
+callback @ main.js?attr=s1gJFG2hiLejUligyIZmo5YkPN88Rk1jPTsdMrAeGrGCm_5ezOdnNyW2OrDEaeX8X2w-3gvbCHv15oGA9kHz9CthAJSaCVPmbsx5Y1Cod5fX64L4Kk6W2uLtN-eO5PhggxWsUfQb_A0OhU70ZGGs3Q:1674
+(anonymous) @ main.js?attr=s1gJFG2hiLejUligyIZmo5YkPN88Rk1jPTsdMrAeGrGCm_5ezOdnNyW2OrDEaeX8X2w-3gvbCHv15oGA9kHz9CthAJSaCVPmbsx5Y1Cod5fX64L4Kk6W2uLtN-eO5PhggxWsUfQb_A0OhU70ZGGs3Q:1403
+ProcessMessage @ main.js?attr=s1gJFG2hiLejUligyIZmo5YkPN88Rk1jPTsdMrAeGrGCm_5ezOdnNyW2OrDEaeX8X2w-3gvbCHv15oGA9kHz9CthAJSaCVPmbsx5Y1Cod5fX64L4Kk6W2uLtN-eO5PhggxWsUfQb_A0OhU70ZGGs3Q:1305
+GetWebSocket.webSocket.onmessage @ main.js?attr=s1gJFG2hiLejUligyIZmo5YkPN88Rk1jPTsdMrAeGrGCm_5ezOdnNyW2OrDEaeX8X2w-3gvbCHv15oGA9kHz9CthAJSaCVPmbsx5Y1Cod5fX64L4Kk6W2uLtN-eO5PhggxWsUfQb_A0OhU70ZGGs3Q:1260Understand this error
