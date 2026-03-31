@@ -619,8 +619,8 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
         <div className="max-w-5xl mx-auto pt-4 px-4">
           {/* Header con nombre y RUT */}
           <div className="flex items-center mb-6">
-            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-              <img src="/images/user.png" alt="Usuario" className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3">
+              <img src="/images/user.png" alt="Usuario" className="w-10 h-10" />
             </div>
             <div>
               <p className="text-[#009ADE] font-medium">{userData.clientName}</p>
